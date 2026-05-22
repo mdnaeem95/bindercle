@@ -2,6 +2,7 @@ import { isAppleAuthAvailable } from '@/lib/auth';
 import { useAuthStore } from '@/stores/auth';
 import { FoilioWordmark, Surface, Text, useTheme } from '@foilio/ui';
 import * as AppleAuthentication from 'expo-apple-authentication';
+import { Redirect } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, Alert, Platform, Pressable, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -11,12 +12,19 @@ export default function SignInScreen() {
   const [appleAvailable, setAppleAvailable] = useState(false);
   const [busy, setBusy] = useState<'apple' | 'google' | null>(null);
 
+  const status = useAuthStore((s) => s.status);
   const signInWithApple = useAuthStore((s) => s.signInWithApple);
   const signInWithGoogle = useAuthStore((s) => s.signInWithGoogle);
 
   useEffect(() => {
     isAppleAuthAvailable().then(setAppleAvailable);
   }, []);
+
+  // Bounce to home once auth completes — keep this AFTER all hooks
+  // so the hook count stays stable across renders.
+  if (status === 'authenticated') {
+    return <Redirect href="/" />;
+  }
 
   const onApple = async () => {
     setBusy('apple');

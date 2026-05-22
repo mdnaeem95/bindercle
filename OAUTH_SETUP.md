@@ -75,7 +75,10 @@ Two pieces required:
 1. Go to https://supabase.com/dashboard/project/rdrtxmhjfikzkfwzdqpr/auth/providers
 2. Find **Apple** → Enable
 3. Fill in:
-   - **Services ID (for OAuth):** `app.foilio.mobile.auth` (from step 1B)
+   - **Client IDs (for OAuth):** `app.foilio.mobile.auth,app.foilio.mobile`
+     - **First:** the Services ID (from step 1B) — used by web/browser OAuth
+     - **Second:** the App ID / bundle ID (from step 1A) — used by native iOS Sign in with Apple
+     - **Both are required.** Apple's native sheet sends the bundle ID as the JWT audience; the web flow sends the Services ID. Supabase rejects either if the matching ID isn't listed.
    - **Secret Key (for OAuth):** *Leave blank — Supabase generates this from the next three fields*
    - **Team ID:** (from 1C step 9)
    - **Key ID:** (from 1C step 8)
