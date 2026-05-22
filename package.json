@@ -1,0 +1,35 @@
+{
+  "name": "foilio",
+  "version": "0.0.1",
+  "private": true,
+  "description": "Foilio — Pokemon TCG collection showcase mobile app.",
+  "packageManager": "pnpm@10.28.0",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "lint": "biome check .",
+    "format": "biome format --write .",
+    "typecheck": "turbo run typecheck",
+    "test": "turbo run test",
+    "mobile": "pnpm --filter @foilio/mobile",
+    "ui": "pnpm --filter @foilio/ui",
+    "prepare": "lefthook install"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "1.9.4",
+    "lefthook": "1.10.0",
+    "turbo": "2.5.6",
+    "typescript": "5.7.2"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "@biomejs/biome",
+      "@shopify/react-native-skia",
+      "lefthook",
+      "msgpackr-extract"
+    ]
+  }
+}

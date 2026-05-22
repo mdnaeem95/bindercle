@@ -1,0 +1,23 @@
+pre-commit:
+  parallel: true
+  commands:
+    biome-check:
+      glob: "*.{js,jsx,ts,tsx,json,jsonc}"
+      run: pnpm exec biome check --no-errors-on-unmatched --files-ignore-unknown=true --staged
+      stage_fixed: true
+    typecheck:
+      glob: "*.{ts,tsx}"
+      run: pnpm typecheck
+
+commit-msg:
+  commands:
+    conventional-commit:
+      run: |
+        # Conventional commit pattern check (lightweight)
+        if ! head -1 "{1}" | grep -qE "^(feat|fix|chore|docs|style|refactor|perf|test|build|ci|revert)(\(.+\))?!?: .+"; then
+          echo "Commit message must follow Conventional Commits format:"
+          echo "  feat: add new feature"
+          echo "  fix(scope): fix bug"
+          echo "  chore: tooling change"
+          exit 1
+        fi
