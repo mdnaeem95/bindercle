@@ -1,4 +1,5 @@
 import { isAppleAuthAvailable } from '@/lib/auth';
+import { trackEvent } from '@/lib/observability';
 import { useAuthStore } from '@/stores/auth';
 import { FoilioWordmark, Surface, Text, useTheme } from '@foilio/ui';
 import * as AppleAuthentication from 'expo-apple-authentication';
@@ -28,12 +29,14 @@ export default function SignInScreen() {
 
   const onApple = async () => {
     setBusy('apple');
+    trackEvent('sign_in_attempted', { provider: 'apple' });
     try {
       await signInWithApple();
     } catch (e) {
       const err = e as { code?: string; message?: string };
       // ERR_REQUEST_CANCELED is fired when the user dismisses the sheet — not a real error
       if (err.code !== 'ERR_REQUEST_CANCELED') {
+        trackEvent('sign_in_failed', { provider: 'apple', error_message: err.message ?? null });
         Alert.alert('Sign in failed', err.message ?? 'Try again in a moment.');
       }
     } finally {
@@ -43,12 +46,14 @@ export default function SignInScreen() {
 
   const onGoogle = async () => {
     setBusy('google');
+    trackEvent('sign_in_attempted', { provider: 'google' });
     try {
       await signInWithGoogle();
     } catch (e) {
       const err = e as { message?: string };
       // Browser dismissed errors include "cancel" — silent
       if (!err.message?.toLowerCase().includes('cancel')) {
+        trackEvent('sign_in_failed', { provider: 'google', error_message: err.message ?? null });
         Alert.alert('Sign in failed', err.message ?? 'Try again in a moment.');
       }
     } finally {

@@ -1,3 +1,4 @@
+import { trackEvent } from '@/lib/observability';
 import { useAuthStore } from '@/stores/auth';
 import { FoilioWordmark, Surface, Text, useTheme } from '@foilio/ui';
 import { Redirect } from 'expo-router';
@@ -36,7 +37,10 @@ export default function HomeScreen() {
         )}
 
         <Pressable
-          onPress={signOut}
+          onPress={() => {
+            trackEvent('sign_out_tapped');
+            signOut();
+          }}
           style={({ pressed }) => ({
             marginTop: 32,
             paddingHorizontal: 20,

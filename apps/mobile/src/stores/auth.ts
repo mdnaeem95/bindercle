@@ -1,5 +1,5 @@
 import { signInWithApple, signInWithGoogle, signOut } from '@/lib/auth';
-import { clearUserIdentity, identifyUser } from '@/lib/observability';
+import { clearUserIdentity, identifyUser, trackEvent } from '@/lib/observability';
 import { supabase } from '@/lib/supabase';
 import type { Session, User } from '@supabase/supabase-js';
 import { create } from 'zustand';
@@ -49,8 +49,13 @@ export const useAuthStore = create<AuthState>((set) => ({
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, nextSession) => {
+    } = supabase.auth.onAuthStateChange((event, nextSession) => {
       applySession(nextSession);
+      if (event === 'SIGNED_IN' && nextSession?.user) {
+        trackEvent('sign_in_succeeded', {
+          provider: nextSession.user.app_metadata.provider ?? null,
+        });
+      }
       set({
         session: nextSession,
         user: nextSession?.user ?? null,
