@@ -12,7 +12,10 @@
       "supportsTablet": true,
       "bundleIdentifier": "app.foilio.mobile",
       "icon": "./assets/expo.icon",
-      "usesAppleSignIn": true
+      "usesAppleSignIn": true,
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "package": "app.foilio.mobile",
@@ -53,6 +56,12 @@
         "projectId": "e969b0d7-d303-4c1a-97d2-77917bd23cbc"
       }
     },
-    "owner": "naeemsani"
+    "owner": "naeemsani",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/e969b0d7-d303-4c1a-97d2-77917bd23cbc"
+    }
   }
 }
