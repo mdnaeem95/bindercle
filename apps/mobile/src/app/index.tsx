@@ -1,15 +1,15 @@
+import { useProfile } from '@/hooks/useProfile';
 import { trackEvent } from '@/lib/observability';
 import { useAuthStore } from '@/stores/auth';
-import { FoilioWordmark, Surface, Text, useTheme } from '@foilio/ui';
-import { Redirect } from 'expo-router';
-import { Pressable, View } from 'react-native';
+import { Avatar, Button, FoilioWordmark, Surface, Text } from '@foilio/ui';
+import { Redirect, router } from 'expo-router';
+import { View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function HomeScreen() {
-  const theme = useTheme();
   const status = useAuthStore((s) => s.status);
-  const user = useAuthStore((s) => s.user);
   const signOut = useAuthStore((s) => s.signOut);
+  const { data: profile } = useProfile();
 
   if (status === 'unauthenticated') {
     return <Redirect href="/sign-in" />;
@@ -18,43 +18,48 @@ export default function HomeScreen() {
   return (
     <Surface level={0} style={{ flex: 1 }}>
       <SafeAreaView
-        style={{ flex: 1, alignItems: 'center', justifyContent: 'center', gap: 24, padding: 24 }}
+        style={{ flex: 1, alignItems: 'center', justifyContent: 'center', gap: 32, padding: 24 }}
       >
         <FoilioWordmark size={72} />
         <Text variant="display2" tone="secondary" align="center">
           your collection, on display
         </Text>
 
-        {user && (
-          <View style={{ alignItems: 'center', gap: 8, marginTop: 24 }}>
-            <Text variant="bodySmall" tone="tertiary" align="center">
-              Signed in as
-            </Text>
-            <Text variant="body" tone="primary" align="center">
-              {user.email ?? user.id}
-            </Text>
+        {profile && (
+          <View style={{ alignItems: 'center', gap: 12, marginTop: 16 }}>
+            <Avatar
+              source={profile.avatar_url}
+              name={profile.display_name ?? profile.handle}
+              size={72}
+            />
+            <View style={{ alignItems: 'center', gap: 4 }}>
+              {profile.display_name && (
+                <Text variant="heading3" align="center">
+                  {profile.display_name}
+                </Text>
+              )}
+              <Text variant="body" tone="secondary" align="center">
+                @{profile.handle}
+              </Text>
+            </View>
           </View>
         )}
 
-        <Pressable
-          onPress={() => {
-            trackEvent('sign_out_tapped');
-            signOut();
-          }}
-          style={({ pressed }) => ({
-            marginTop: 32,
-            paddingHorizontal: 20,
-            paddingVertical: 10,
-            borderRadius: 9999,
-            borderWidth: 1,
-            borderColor: theme.colors.borderDefault,
-            opacity: pressed ? 0.6 : 1,
-          })}
-        >
-          <Text variant="caption" tone="secondary">
+        <View style={{ flexDirection: 'row', gap: 12, marginTop: 16 }}>
+          <Button variant="secondary" size="sm" onPress={() => router.push('/profile/edit')}>
+            Edit profile
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onPress={() => {
+              trackEvent('sign_out_tapped');
+              signOut();
+            }}
+          >
             Sign out
-          </Text>
-        </Pressable>
+          </Button>
+        </View>
       </SafeAreaView>
     </Surface>
   );
