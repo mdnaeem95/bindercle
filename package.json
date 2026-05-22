@@ -27,6 +27,7 @@
   "pnpm": {
     "onlyBuiltDependencies": [
       "@biomejs/biome",
+      "@sentry/cli",
       "@shopify/react-native-skia",
       "lefthook",
       "msgpackr-extract"

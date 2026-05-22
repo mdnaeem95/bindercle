@@ -1,4 +1,5 @@
 import { signInWithApple, signInWithGoogle, signOut } from '@/lib/auth';
+import { clearUserIdentity, identifyUser } from '@/lib/observability';
 import { supabase } from '@/lib/supabase';
 import type { Session, User } from '@supabase/supabase-js';
 import { create } from 'zustand';
@@ -19,6 +20,17 @@ interface AuthState {
   signOut: () => Promise<void>;
 }
 
+function applySession(session: Session | null) {
+  if (session?.user) {
+    identifyUser(session.user.id, {
+      email: session.user.email ?? null,
+      provider: session.user.app_metadata.provider ?? null,
+    });
+  } else {
+    clearUserIdentity();
+  }
+}
+
 export const useAuthStore = create<AuthState>((set) => ({
   status: 'unknown',
   session: null,
@@ -28,6 +40,7 @@ export const useAuthStore = create<AuthState>((set) => ({
     const {
       data: { session },
     } = await supabase.auth.getSession();
+    applySession(session);
     set({
       session,
       user: session?.user ?? null,
@@ -37,6 +50,7 @@ export const useAuthStore = create<AuthState>((set) => ({
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, nextSession) => {
+      applySession(nextSession);
       set({
         session: nextSession,
         user: nextSession?.user ?? null,
@@ -44,22 +58,18 @@ export const useAuthStore = create<AuthState>((set) => ({
       });
     });
 
-    // Caller stores the unsubscribe and calls it on unmount.
     return () => subscription.unsubscribe();
   },
 
   signInWithApple: async () => {
     await signInWithApple();
-    // onAuthStateChange will update the store
   },
 
   signInWithGoogle: async () => {
     await signInWithGoogle();
-    // onAuthStateChange will update the store
   },
 
   signOut: async () => {
     await signOut();
-    // onAuthStateChange will update the store
   },
 }));

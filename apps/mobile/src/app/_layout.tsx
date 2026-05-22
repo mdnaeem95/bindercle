@@ -1,11 +1,17 @@
 import { useFoilioFonts } from '@/lib/fonts';
+import { initializeObservability } from '@/lib/observability';
 import { useAuthStore } from '@/stores/auth';
 import { ThemeContext, darkTheme } from '@foilio/ui';
+import * as Sentry from '@sentry/react-native';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 
-export default function RootLayout() {
+// Initialize Sentry + PostHog before any component renders so the very
+// first error/event is captured.
+initializeObservability();
+
+function RootLayout() {
   const [fontsLoaded] = useFoilioFonts();
   const authStatus = useAuthStore((s) => s.status);
 
@@ -37,3 +43,6 @@ export default function RootLayout() {
     </ThemeContext.Provider>
   );
 }
+
+// Wrap the root with Sentry's error boundary + navigation instrumentation.
+export default Sentry.wrap(RootLayout);
