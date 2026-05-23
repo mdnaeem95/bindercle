@@ -16,6 +16,8 @@ interface CreateCardInput {
   rarity?: string | null;
   condition?: CardCondition | null;
   notes?: string | null;
+  /** Pokemon TCG API card ID — links to the mirror table when set. */
+  tcg_card_id?: string | null;
   /** Local URIs to upload as photos after the card row is inserted. */
   photo_uris: string[];
 }
@@ -45,6 +47,7 @@ export function useCreateCard() {
           rarity: input.rarity ?? null,
           condition: input.condition ?? null,
           notes: input.notes ?? null,
+          tcg_card_id: input.tcg_card_id ?? null,
           position: count ?? 0,
         })
         .select('*')

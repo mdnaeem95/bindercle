@@ -1,6 +1,9 @@
+import { TcgCardSuggestions } from '@/components/TcgCardSuggestions';
 import { useCard } from '@/hooks/useCards';
 import { useDeleteCard } from '@/hooks/useDeleteCard';
 import { useUpdateCard } from '@/hooks/useUpdateCard';
+import { mirrorTcgCard } from '@/lib/mirrorTcgCard';
+import type { TcgApiCard } from '@/lib/pokemonTcg';
 import {
   CARD_CONDITIONS,
   CARD_CONDITION_LABELS,
@@ -10,6 +13,7 @@ import {
 import { Button, ChipGroup, Input, Surface, Text, useTheme } from '@foilio/ui';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { router, useLocalSearchParams } from 'expo-router';
+import { useEffect, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { Alert, KeyboardAvoidingView, Platform, Pressable, ScrollView, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -20,10 +24,18 @@ export default function EditCardScreen() {
   const { data: card, isLoading } = useCard(cardId);
   const updateCard = useUpdateCard();
   const deleteCard = useDeleteCard();
+  const [tcgCardId, setTcgCardId] = useState<string | null>(null);
+
+  // Sync the TCG link state from the loaded card row
+  useEffect(() => {
+    setTcgCardId(card?.tcg_card_id ?? null);
+  }, [card?.tcg_card_id]);
 
   const {
     control,
     handleSubmit,
+    setValue,
+    watch,
     formState: { errors, isDirty, isSubmitting },
   } = useForm<CardFormValues>({
     resolver: zodResolver(cardFormSchema),
@@ -47,6 +59,22 @@ export default function EditCardScreen() {
       : undefined,
   });
 
+  const nameQuery = watch('name');
+
+  const onPickTcgCard = async (picked: TcgApiCard) => {
+    try {
+      await mirrorTcgCard(picked);
+      setTcgCardId(picked.id);
+      setValue('name', picked.name, { shouldDirty: true });
+      setValue('set_code', picked.set.id, { shouldDirty: true });
+      setValue('set_number', picked.number, { shouldDirty: true });
+      if (picked.rarity) setValue('rarity', picked.rarity, { shouldDirty: true });
+    } catch (e) {
+      const err = e as { message?: string };
+      Alert.alert('Could not link card', err.message ?? 'Try again.');
+    }
+  };
+
   const onSubmit = async (values: CardFormValues) => {
     if (!card) return;
     try {
@@ -60,6 +88,7 @@ export default function EditCardScreen() {
           rarity: values.rarity?.trim() || null,
           condition: values.condition ?? null,
           notes: values.notes?.trim() || null,
+          tcg_card_id: tcgCardId,
         },
       });
       router.back();
@@ -140,20 +169,53 @@ export default function EditCardScreen() {
             contentContainerStyle={{ padding: 24, gap: 24 }}
             keyboardShouldPersistTaps="handled"
           >
-            <Controller
-              control={control}
-              name="name"
-              render={({ field: { value, onChange, onBlur } }) => (
-                <Input
-                  label="Name"
-                  error={errors.name?.message}
-                  value={value}
-                  onChangeText={onChange}
-                  onBlur={onBlur}
-                  maxLength={100}
-                />
+            <View style={{ gap: 8 }}>
+              <Controller
+                control={control}
+                name="name"
+                render={({ field: { value, onChange, onBlur } }) => (
+                  <Input
+                    label="Name"
+                    placeholder="Search Pokemon TCG…"
+                    error={errors.name?.message}
+                    value={value}
+                    onChangeText={(text) => {
+                      onChange(text);
+                      if (tcgCardId) setTcgCardId(null);
+                    }}
+                    onBlur={onBlur}
+                    maxLength={100}
+                  />
+                )}
+              />
+
+              {tcgCardId ? (
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    paddingHorizontal: 12,
+                    paddingVertical: 8,
+                    borderRadius: 12,
+                    backgroundColor: theme.colors.bgElevated2,
+                    borderWidth: 1,
+                    borderColor: theme.colors.borderDefault,
+                  }}
+                >
+                  <Text variant="caption" tone="secondary">
+                    ✓ Linked to TCG card · {tcgCardId}
+                  </Text>
+                  <Pressable onPress={() => setTcgCardId(null)} hitSlop={6}>
+                    <Text variant="caption" tone="tertiary">
+                      Unlink
+                    </Text>
+                  </Pressable>
+                </View>
+              ) : (
+                <TcgCardSuggestions query={nameQuery} onSelect={onPickTcgCard} />
               )}
-            />
+            </View>
 
             <View style={{ flexDirection: 'row', gap: 12 }}>
               <Controller

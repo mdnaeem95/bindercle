@@ -1,4 +1,7 @@
+import { TcgCardSuggestions } from '@/components/TcgCardSuggestions';
 import { useCreateCard } from '@/hooks/useCreateCard';
+import { mirrorTcgCard } from '@/lib/mirrorTcgCard';
+import type { TcgApiCard } from '@/lib/pokemonTcg';
 import { pickImages, takePhoto } from '@/lib/uploads';
 import {
   CARD_CONDITIONS,
@@ -30,10 +33,13 @@ export default function NewCardScreen() {
   const { id: binderId } = useLocalSearchParams<{ id: string }>();
   const createCard = useCreateCard();
   const [photos, setPhotos] = useState<string[]>([]);
+  const [tcgCardId, setTcgCardId] = useState<string | null>(null);
 
   const {
     control,
     handleSubmit,
+    setValue,
+    watch,
     formState: { errors, isSubmitting },
   } = useForm<CardFormValues>({
     resolver: zodResolver(cardFormSchema),
@@ -46,6 +52,26 @@ export default function NewCardScreen() {
       notes: '',
     },
   });
+
+  const nameQuery = watch('name');
+
+  const onPickTcgCard = async (card: TcgApiCard) => {
+    try {
+      await mirrorTcgCard(card);
+      setTcgCardId(card.id);
+      setValue('name', card.name, { shouldDirty: true });
+      setValue('set_code', card.set.id, { shouldDirty: true });
+      setValue('set_number', card.number, { shouldDirty: true });
+      if (card.rarity) setValue('rarity', card.rarity, { shouldDirty: true });
+    } catch (e) {
+      const err = e as { message?: string };
+      Alert.alert('Could not link card', err.message ?? 'Try again.');
+    }
+  };
+
+  const onUnlinkTcgCard = () => {
+    setTcgCardId(null);
+  };
 
   const canAddPhoto = photos.length < PHOTO_LIMIT;
 
@@ -111,6 +137,7 @@ export default function NewCardScreen() {
         rarity: values.rarity?.trim() || null,
         condition: values.condition ?? null,
         notes: values.notes?.trim() || null,
+        tcg_card_id: tcgCardId,
         photo_uris: photos,
       });
       router.replace(`/cards/${card.id}`);
@@ -231,22 +258,56 @@ export default function NewCardScreen() {
               </ScrollView>
             </View>
 
-            {/* Name */}
-            <Controller
-              control={control}
-              name="name"
-              render={({ field: { value, onChange, onBlur } }) => (
-                <Input
-                  label="Name"
-                  placeholder="Charizard"
-                  error={errors.name?.message}
-                  value={value}
-                  onChangeText={onChange}
-                  onBlur={onBlur}
-                  maxLength={100}
-                />
+            {/* Name + TCG picker */}
+            <View style={{ gap: 8 }}>
+              <Controller
+                control={control}
+                name="name"
+                render={({ field: { value, onChange, onBlur } }) => (
+                  <Input
+                    label="Name"
+                    placeholder="Search Pokemon TCG…"
+                    hint={tcgCardId ? undefined : 'Type to search the TCG database'}
+                    error={errors.name?.message}
+                    value={value}
+                    onChangeText={(text) => {
+                      onChange(text);
+                      // Editing the name unlinks from the canonical TCG card
+                      if (tcgCardId) setTcgCardId(null);
+                    }}
+                    onBlur={onBlur}
+                    maxLength={100}
+                  />
+                )}
+              />
+
+              {tcgCardId ? (
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    paddingHorizontal: 12,
+                    paddingVertical: 8,
+                    borderRadius: 12,
+                    backgroundColor: theme.colors.bgElevated2,
+                    borderWidth: 1,
+                    borderColor: theme.colors.borderDefault,
+                  }}
+                >
+                  <Text variant="caption" tone="secondary">
+                    ✓ Linked to TCG card · {tcgCardId}
+                  </Text>
+                  <Pressable onPress={onUnlinkTcgCard} hitSlop={6}>
+                    <Text variant="caption" tone="tertiary">
+                      Unlink
+                    </Text>
+                  </Pressable>
+                </View>
+              ) : (
+                <TcgCardSuggestions query={nameQuery} onSelect={onPickTcgCard} />
               )}
-            />
+            </View>
 
             {/* Set code + number — side by side */}
             <View style={{ flexDirection: 'row', gap: 12 }}>
