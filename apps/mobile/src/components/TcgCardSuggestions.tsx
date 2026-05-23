@@ -10,6 +10,11 @@ type TcgCardSuggestionsProps = {
 
 /**
  * Inline autocomplete dropdown for the Pokemon TCG card name field.
+ *
+ * Search results come from TCGdex's list endpoint which returns brief data
+ * only (id, name, number, image). Full details — rarity, proper set name,
+ * illustrator — are fetched when the user actually picks a card.
+ *
  * Renders nothing if the query is too short or no results.
  */
 export function TcgCardSuggestions({ query, onSelect }: TcgCardSuggestionsProps) {
@@ -76,13 +81,8 @@ export function TcgCardSuggestions({ query, onSelect }: TcgCardSuggestionsProps)
               {card.name}
             </Text>
             <Text variant="caption" tone="tertiary" numberOfLines={1}>
-              {card.set.name} · {card.number}
+              {card.set.id} · #{card.number}
             </Text>
-            {card.rarity && (
-              <Text variant="caption" tone="tertiary" numberOfLines={1}>
-                {card.rarity}
-              </Text>
-            )}
           </View>
         </Pressable>
       ))}

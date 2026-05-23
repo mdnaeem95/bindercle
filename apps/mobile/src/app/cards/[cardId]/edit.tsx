@@ -3,7 +3,7 @@ import { useCard } from '@/hooks/useCards';
 import { useDeleteCard } from '@/hooks/useDeleteCard';
 import { useUpdateCard } from '@/hooks/useUpdateCard';
 import { mirrorTcgCard } from '@/lib/mirrorTcgCard';
-import type { TcgApiCard } from '@/lib/pokemonTcg';
+import { type TcgApiCard, getTcgCardById } from '@/lib/pokemonTcg';
 import {
   CARD_CONDITIONS,
   CARD_CONDITION_LABELS,
@@ -73,13 +73,15 @@ export default function EditCardScreen() {
 
   const onPickTcgCard = async (picked: TcgApiCard) => {
     try {
-      await mirrorTcgCard(picked);
-      setTcgCardId(picked.id);
-      setTcgCardArt(picked.images?.small ?? null);
-      setValue('name', picked.name, { shouldDirty: true });
-      setValue('set_code', picked.set.id, { shouldDirty: true });
-      setValue('set_number', picked.number, { shouldDirty: true });
-      if (picked.rarity) setValue('rarity', picked.rarity, { shouldDirty: true });
+      const full = (await getTcgCardById(picked.id)) ?? picked;
+
+      await mirrorTcgCard(full);
+      setTcgCardId(full.id);
+      setTcgCardArt(full.images?.small ?? null);
+      setValue('name', full.name, { shouldDirty: true });
+      setValue('set_code', full.set.id, { shouldDirty: true });
+      setValue('set_number', full.number, { shouldDirty: true });
+      if (full.rarity) setValue('rarity', full.rarity, { shouldDirty: true });
     } catch (e) {
       const err = e as { message?: string };
       Alert.alert('Could not link card', err.message ?? 'Try again.');

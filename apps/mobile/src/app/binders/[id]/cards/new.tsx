@@ -1,7 +1,7 @@
 import { TcgCardSuggestions } from '@/components/TcgCardSuggestions';
 import { useCreateCard } from '@/hooks/useCreateCard';
 import { mirrorTcgCard } from '@/lib/mirrorTcgCard';
-import type { TcgApiCard } from '@/lib/pokemonTcg';
+import { type TcgApiCard, getTcgCardById } from '@/lib/pokemonTcg';
 import { pickImages, takePhoto } from '@/lib/uploads';
 import {
   CARD_CONDITIONS,
@@ -58,13 +58,17 @@ export default function NewCardScreen() {
 
   const onPickTcgCard = async (card: TcgApiCard) => {
     try {
-      await mirrorTcgCard(card);
-      setTcgCardId(card.id);
-      setTcgCardArt(card.images?.small ?? null);
-      setValue('name', card.name, { shouldDirty: true });
-      setValue('set_code', card.set.id, { shouldDirty: true });
-      setValue('set_number', card.number, { shouldDirty: true });
-      if (card.rarity) setValue('rarity', card.rarity, { shouldDirty: true });
+      // Search returns brief data; fetch full details so the mirror gets
+      // rarity, proper set name, illustrator, release date.
+      const full = (await getTcgCardById(card.id)) ?? card;
+
+      await mirrorTcgCard(full);
+      setTcgCardId(full.id);
+      setTcgCardArt(full.images?.small ?? null);
+      setValue('name', full.name, { shouldDirty: true });
+      setValue('set_code', full.set.id, { shouldDirty: true });
+      setValue('set_number', full.number, { shouldDirty: true });
+      if (full.rarity) setValue('rarity', full.rarity, { shouldDirty: true });
     } catch (e) {
       const err = e as { message?: string };
       Alert.alert('Could not link card', err.message ?? 'Try again.');

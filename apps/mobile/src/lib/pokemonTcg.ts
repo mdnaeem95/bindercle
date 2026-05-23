@@ -1,16 +1,43 @@
 /**
- * Minimal wrapper around the pokemontcg.io REST API.
+ * TCGdex client — wraps https://api.tcgdex.net/v2.
  *
- * v1 calls the API directly from the client. No API key required for
- * low-volume read traffic (rate-limited to 1k req/day per IP).
+ * Why TCGdex over pokemontcg.io: multilingual (English, French, German,
+ * Spanish, Italian, Portuguese, **Japanese**, Korean, Chinese), faster
+ * cadence on new set additions, free and open-source.
  *
- * If we hit rate limits at scale, add `EXPO_PUBLIC_POKEMON_TCG_API_KEY`
- * to `.env.local` and pass it as the `X-Api-Key` header — bumps the
- * limit to 30k/day.
+ * The internal `TcgApiCard` shape is intentionally generic — if we ever
+ * swap providers again, only this module changes.
+ *
+ * Image URLs: TCGdex returns an image *stem* like
+ * `https://assets.tcgdex.net/en/swsh/swsh4/4`. To display, suffix with
+ * `/low.webp` (thumbnail) or `/high.webp` (detail). We do that here so
+ * consumers get usable URLs in `images.small` / `images.large`.
  */
 
-const BASE_URL = 'https://api.pokemontcg.io/v2';
-const API_KEY = process.env.EXPO_PUBLIC_POKEMON_TCG_API_KEY;
+const BASE_URL = 'https://api.tcgdex.net/v2';
+const LANG = process.env.EXPO_PUBLIC_TCG_LANGUAGE ?? 'en';
+
+interface TcgdexCardBrief {
+  id: string;
+  localId: string;
+  name: string;
+  image?: string | null;
+}
+
+interface TcgdexCardFull {
+  id: string;
+  localId: string;
+  name: string;
+  image?: string | null;
+  illustrator?: string;
+  rarity?: string;
+  category?: string;
+  set: {
+    id: string;
+    name: string;
+    releaseDate?: string;
+  };
+}
 
 interface TcgApiSet {
   id: string;
@@ -23,10 +50,6 @@ interface TcgApiCardImages {
   large?: string;
 }
 
-/**
- * Subset of the pokemontcg.io card shape we care about.
- * The raw object is preserved as `raw` so the mirror table keeps the full record.
- */
 export interface TcgApiCard {
   id: string;
   name: string;
@@ -35,75 +58,94 @@ export interface TcgApiCard {
   artist?: string;
   set: TcgApiSet;
   images?: TcgApiCardImages;
-  /** Raw API response — stored in pokemon_tcg_cards.raw_json. */
   raw: Record<string, unknown>;
 }
 
-interface TcgApiCardResponse {
-  id: string;
-  name: string;
-  number: string;
-  rarity?: string;
-  artist?: string;
-  set: TcgApiSet;
-  images?: TcgApiCardImages;
-  [key: string]: unknown;
-}
-
-function authHeaders(): Record<string, string> {
-  if (API_KEY) return { 'X-Api-Key': API_KEY };
-  return {};
-}
-
-function toTcgApiCard(raw: TcgApiCardResponse): TcgApiCard {
+function imageVariants(stem: string | null | undefined): TcgApiCardImages | undefined {
+  if (!stem) return undefined;
   return {
-    id: raw.id,
-    name: raw.name,
-    number: raw.number,
-    rarity: raw.rarity,
-    artist: raw.artist,
-    set: raw.set,
-    images: raw.images,
-    raw,
+    small: `${stem}/low.webp`,
+    large: `${stem}/high.webp`,
   };
 }
 
 /**
- * Search Pokemon TCG cards by name (substring, wildcarded).
- * The query is sent to the API's Lucene-style search; the wildcard suffix
- * means typing "Char" matches "Charizard", "Charmander", "Charmeleon", etc.
+ * Derive a set code from a TCGdex card ID. Card IDs are formatted as
+ * `{setId}-{localId}` so we can parse the set ID until we fetch full details.
+ */
+function setCodeFromId(cardId: string): string {
+  const dash = cardId.lastIndexOf('-');
+  return dash > 0 ? cardId.slice(0, dash) : cardId;
+}
+
+function briefToCard(brief: TcgdexCardBrief): TcgApiCard {
+  return {
+    id: brief.id,
+    name: brief.name,
+    number: brief.localId,
+    set: {
+      id: setCodeFromId(brief.id),
+      name: setCodeFromId(brief.id),
+    },
+    images: imageVariants(brief.image),
+    raw: brief as unknown as Record<string, unknown>,
+  };
+}
+
+function fullToCard(full: TcgdexCardFull): TcgApiCard {
+  return {
+    id: full.id,
+    name: full.name,
+    number: full.localId,
+    rarity: full.rarity,
+    artist: full.illustrator,
+    set: {
+      id: full.set.id,
+      name: full.set.name,
+      releaseDate: full.set.releaseDate,
+    },
+    images: imageVariants(full.image),
+    raw: full as unknown as Record<string, unknown>,
+  };
+}
+
+/**
+ * Search Pokemon TCG cards by name (substring, case-insensitive).
  *
- * Returns up to `pageSize` results (default 12).
+ * TCGdex's `like:` filter does substring matching — typing "char" matches
+ * Charizard, Charmander, Charmeleon. Results are paginated; we take the
+ * first page (default 12 items).
+ *
+ * Returns brief card data — name, number, image — so consumers can render
+ * an autocomplete dropdown without N+1 detail fetches. Use `getTcgCardById`
+ * for the full details when the user actually picks one.
  */
 export async function searchTcgCards(query: string, pageSize = 12): Promise<TcgApiCard[]> {
   const trimmed = query.trim();
   if (trimmed.length === 0) return [];
 
-  const safeQuery = trimmed.replace(/"/g, '');
-  const url = new URL(`${BASE_URL}/cards`);
-  url.searchParams.set('q', `name:"${safeQuery}*"`);
-  url.searchParams.set('orderBy', 'name,set.releaseDate');
-  url.searchParams.set('pageSize', String(pageSize));
+  const url = new URL(`${BASE_URL}/${LANG}/cards`);
+  url.searchParams.set('name', `like:${trimmed}`);
+  url.searchParams.set('pagination:itemsPerPage', String(pageSize));
 
-  const response = await fetch(url.toString(), { headers: authHeaders() });
+  const response = await fetch(url.toString());
   if (!response.ok) {
-    throw new Error(`Pokemon TCG search failed: ${response.status}`);
+    throw new Error(`TCGdex search failed: ${response.status}`);
   }
-  const json = (await response.json()) as { data?: TcgApiCardResponse[] };
-  return (json.data ?? []).map(toTcgApiCard);
+  const data = (await response.json()) as TcgdexCardBrief[];
+  return data.map(briefToCard);
 }
 
 /**
- * Fetch a single card by its TCG ID (e.g. "base1-4").
+ * Fetch a single card by its TCGdex ID (e.g. "swsh4-4").
+ * Returns null if the card doesn't exist in the configured language.
  */
 export async function getTcgCardById(id: string): Promise<TcgApiCard | null> {
-  const response = await fetch(`${BASE_URL}/cards/${encodeURIComponent(id)}`, {
-    headers: authHeaders(),
-  });
+  const response = await fetch(`${BASE_URL}/${LANG}/cards/${encodeURIComponent(id)}`);
   if (response.status === 404) return null;
   if (!response.ok) {
-    throw new Error(`Pokemon TCG fetch failed: ${response.status}`);
+    throw new Error(`TCGdex fetch failed: ${response.status}`);
   }
-  const json = (await response.json()) as { data?: TcgApiCardResponse };
-  return json.data ? toTcgApiCard(json.data) : null;
+  const data = (await response.json()) as TcgdexCardFull;
+  return fullToCard(data);
 }
