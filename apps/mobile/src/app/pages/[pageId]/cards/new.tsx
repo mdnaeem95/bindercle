@@ -31,7 +31,7 @@ const PHOTO_LIMIT = 6;
 export default function NewCardScreen() {
   const theme = useTheme();
   const insets = useSafeAreaInsets();
-  const { id: binderId } = useLocalSearchParams<{ id: string }>();
+  const { pageId } = useLocalSearchParams<{ pageId: string }>();
   const createCard = useCreateCard();
   const [photos, setPhotos] = useState<string[]>([]);
   const [tcgCardId, setTcgCardId] = useState<string | null>(null);
@@ -136,10 +136,10 @@ export default function NewCardScreen() {
   };
 
   const onSubmit = async (values: CardFormValues) => {
-    if (!binderId) return;
+    if (!pageId) return;
     try {
       const card = await createCard.mutateAsync({
-        binder_id: binderId,
+        page_id: pageId,
         name: values.name,
         caption: values.caption?.trim() || null,
         set_code: values.set_code?.trim() || null,

@@ -14,6 +14,54 @@ export type Database = {
   }
   public: {
     Tables: {
+      binder_pages: {
+        Row: {
+          binder_id: string
+          created_at: string
+          id: string
+          layout_type: string
+          name: string | null
+          owner_id: string
+          position: number
+          updated_at: string
+        }
+        Insert: {
+          binder_id: string
+          created_at?: string
+          id?: string
+          layout_type?: string
+          name?: string | null
+          owner_id: string
+          position?: number
+          updated_at?: string
+        }
+        Update: {
+          binder_id?: string
+          created_at?: string
+          id?: string
+          layout_type?: string
+          name?: string | null
+          owner_id?: string
+          position?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "binder_pages_binder_id_fkey"
+            columns: ["binder_id"]
+            isOneToOne: false
+            referencedRelation: "binders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "binder_pages_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       binder_tags: {
         Row: {
           binder_id: string
@@ -136,6 +184,7 @@ export type Database = {
           name: string
           notes: string | null
           owner_id: string
+          page_id: string
           position: number
           rarity: string | null
           set_code: string | null
@@ -152,6 +201,7 @@ export type Database = {
           name: string
           notes?: string | null
           owner_id: string
+          page_id: string
           position?: number
           rarity?: string | null
           set_code?: string | null
@@ -168,6 +218,7 @@ export type Database = {
           name?: string
           notes?: string | null
           owner_id?: string
+          page_id?: string
           position?: number
           rarity?: string | null
           set_code?: string | null
@@ -188,6 +239,13 @@ export type Database = {
             columns: ["owner_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cards_page_id_fkey"
+            columns: ["page_id"]
+            isOneToOne: false
+            referencedRelation: "binder_pages"
             referencedColumns: ["id"]
           },
           {

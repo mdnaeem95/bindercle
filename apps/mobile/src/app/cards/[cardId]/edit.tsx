@@ -124,8 +124,16 @@ export default function EditCardScreen() {
         style: 'destructive',
         onPress: async () => {
           try {
-            await deleteCard.mutateAsync({ id: card.id, binder_id: card.binder_id });
-            router.replace(`/binders/${card.binder_id}`);
+            await deleteCard.mutateAsync({
+              id: card.id,
+              binder_id: card.binder_id,
+              page_id: card.page_id ?? undefined,
+            });
+            if (card.page_id) {
+              router.replace(`/pages/${card.page_id}`);
+            } else {
+              router.replace(`/binders/${card.binder_id}`);
+            }
           } catch (e) {
             const err = e as { message?: string };
             Alert.alert('Could not delete', err.message ?? 'Try again.');

@@ -1,8 +1,15 @@
-import { CardLayout } from '@/components/CardLayout';
 import { useBinder } from '@/hooks/useBinder';
 import { useCardsForBinder } from '@/hooks/useCards';
-import type { BinderLayout } from '@/lib/validators/binder';
-import { type AccentColor, Button, Surface, Text, accentSolid, useTheme } from '@foilio/ui';
+import { usePagesForBinder } from '@/hooks/usePages';
+import {
+  type AccentColor,
+  Button,
+  PageThumbnail,
+  Surface,
+  Text,
+  accentSolid,
+  useTheme,
+} from '@foilio/ui';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Image, Pressable, View } from 'react-native';
 import Animated, {
@@ -17,14 +24,16 @@ export default function BinderDetailScreen() {
   const insets = useSafeAreaInsets();
   const { id } = useLocalSearchParams<{ id: string }>();
   const { data: binder, isLoading } = useBinder(id);
-  const { data: cards } = useCardsForBinder(id);
+  const { data: pages } = usePagesForBinder(id);
+  // Used to derive preview thumbnails per page (one query for the whole binder is
+  // cheaper than N queries per page).
+  const { data: allCards } = useCardsForBinder(id);
 
   const scrollY = useSharedValue(0);
   const scrollHandler = useAnimatedScrollHandler((event) => {
     scrollY.value = event.contentOffset.y;
   });
 
-  // Hero parallax: image moves at half scroll speed, scales up on overscroll
   const heroAnimatedStyle = useAnimatedStyle(() => {
     const overscroll = scrollY.value < 0 ? -scrollY.value : 0;
     const scale = 1 + overscroll / 400;
@@ -43,8 +52,29 @@ export default function BinderDetailScreen() {
     );
   }
 
-  const cardCount = cards?.length ?? 0;
+  const pageCount = pages?.length ?? 0;
+  const totalCardCount = allCards?.length ?? 0;
   const accentTint = accentSolid(binder.accent_color as AccentColor | null);
+
+  // Group preview URLs by page_id so each PageThumbnail can render its own mini grid
+  const previewsByPage = new Map<string, string[]>();
+  for (const card of allCards ?? []) {
+    if (!card.page_id) continue;
+    const url = card.photos[0]?.url ?? card.tcg_card?.image_small ?? null;
+    if (!url) continue;
+    const existing = previewsByPage.get(card.page_id) ?? [];
+    if (existing.length < 6) {
+      existing.push(url);
+      previewsByPage.set(card.page_id, existing);
+    }
+  }
+
+  // Card counts per page
+  const countsByPage = new Map<string, number>();
+  for (const card of allCards ?? []) {
+    if (!card.page_id) continue;
+    countsByPage.set(card.page_id, (countsByPage.get(card.page_id) ?? 0) + 1);
+  }
 
   return (
     <Surface level={0} style={{ flex: 1 }}>
@@ -127,7 +157,8 @@ export default function BinderDetailScreen() {
             </Text>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
               <Text variant="caption" tone="tertiary">
-                {cardCount} {cardCount === 1 ? 'card' : 'cards'}
+                {pageCount} {pageCount === 1 ? 'page' : 'pages'} · {totalCardCount}{' '}
+                {totalCardCount === 1 ? 'card' : 'cards'}
               </Text>
               {!binder.is_public && (
                 <Text variant="caption" tone="tertiary">
@@ -163,7 +194,7 @@ export default function BinderDetailScreen() {
             </View>
           )}
 
-          {/* Cards grid */}
+          {/* Pages grid */}
           <View style={{ marginTop: 16, gap: 12 }}>
             <View
               style={{
@@ -172,17 +203,17 @@ export default function BinderDetailScreen() {
                 justifyContent: 'space-between',
               }}
             >
-              <Text variant="heading3">Cards</Text>
+              <Text variant="heading3">Pages</Text>
               <Button
                 variant="secondary"
                 size="sm"
-                onPress={() => router.push(`/binders/${binder.id}/cards/new`)}
+                onPress={() => router.push(`/binders/${binder.id}/pages/new`)}
               >
-                + Add one
+                + Add page
               </Button>
             </View>
 
-            {cardCount === 0 ? (
+            {pageCount === 0 ? (
               <View
                 style={{
                   marginTop: 8,
@@ -196,18 +227,27 @@ export default function BinderDetailScreen() {
                 }}
               >
                 <Text variant="body" align="center">
-                  empty binder, full potential 💫
+                  no pages yet 📑
                 </Text>
                 <Text variant="caption" tone="secondary" align="center">
-                  Drop in a card. Tell its story. Build the vibe.
+                  Add a page to start arranging cards.
                 </Text>
               </View>
             ) : (
-              <CardLayout
-                layout={(binder.layout_type as BinderLayout) ?? 'grid'}
-                cards={cards ?? []}
-                onCardPress={(cardId) => router.push(`/cards/${cardId}`)}
-              />
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12 }}>
+                {(pages ?? []).map((page, index) => (
+                  <View key={page.id} style={{ width: '47.5%' }}>
+                    <PageThumbnail
+                      name={page.name ?? ''}
+                      pageNumber={index + 1}
+                      cardCount={countsByPage.get(page.id) ?? page.card_count}
+                      previewUrls={previewsByPage.get(page.id) ?? []}
+                      accentColor={accentTint}
+                      onPress={() => router.push(`/pages/${page.id}`)}
+                    />
+                  </View>
+                ))}
+              </View>
             )}
           </View>
         </View>

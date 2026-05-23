@@ -1,5 +1,6 @@
 import { bindersQueryKey } from '@/hooks/useBinders';
-import { cardsForBinderQueryKey } from '@/hooks/useCards';
+import { cardsForBinderQueryKey, cardsForPageQueryKey } from '@/hooks/useCards';
+import { pagesForBinderQueryKey } from '@/hooks/usePages';
 import { trackEvent } from '@/lib/observability';
 import { supabase } from '@/lib/supabase';
 import { uploadCardPhoto } from '@/lib/uploads';
@@ -9,7 +10,8 @@ import type { Card } from '@foilio/api-client';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 interface CreateCardInput {
-  binder_id: string;
+  /** Target page within a binder. binder_id is derived. */
+  page_id: string;
   name: string;
   caption?: string | null;
   set_code?: string | null;
@@ -17,9 +19,7 @@ interface CreateCardInput {
   rarity?: string | null;
   condition?: CardCondition | null;
   notes?: string | null;
-  /** Pokemon TCG API card ID — links to the mirror table when set. */
   tcg_card_id?: string | null;
-  /** Local URIs to upload as photos after the card row is inserted. */
   photo_uris: string[];
 }
 
@@ -31,16 +31,25 @@ export function useCreateCard() {
     mutationFn: async (input) => {
       if (!userId) throw new Error('Not authenticated');
 
-      // Compute the next position so new cards land at the end of the binder.
+      // Resolve the binder from the page so cards stay denormalized to binder_id.
+      const { data: page, error: pageError } = await supabase
+        .from('binder_pages')
+        .select('id, binder_id')
+        .eq('id', input.page_id)
+        .single();
+      if (pageError) throw pageError;
+
+      // Compute next position within the page.
       const { count } = await supabase
         .from('cards')
         .select('id', { count: 'exact', head: true })
-        .eq('binder_id', input.binder_id);
+        .eq('page_id', input.page_id);
 
       const { data: card, error } = await supabase
         .from('cards')
         .insert({
-          binder_id: input.binder_id,
+          binder_id: page.binder_id,
+          page_id: page.id,
           owner_id: userId,
           name: input.name,
           caption: input.caption ?? null,
@@ -56,7 +65,7 @@ export function useCreateCard() {
         .single();
       if (error) throw error;
 
-      // Upload photos sequentially, then insert card_photos rows in one batch
+      // Upload photos sequentially, batch-insert photo rows.
       if (input.photo_uris.length > 0) {
         const photoRecords: { card_id: string; url: string; order_index: number }[] = [];
         for (let i = 0; i < input.photo_uris.length; i++) {
@@ -73,13 +82,15 @@ export function useCreateCard() {
 
       return card;
     },
-    onSuccess: (_card, input) => {
+    onSuccess: (card, input) => {
       trackEvent('card_created', {
         photo_count: input.photo_uris.length,
         has_set: !!input.set_code || !!input.set_number,
         has_condition: !!input.condition,
       });
-      queryClient.invalidateQueries({ queryKey: cardsForBinderQueryKey(input.binder_id) });
+      queryClient.invalidateQueries({ queryKey: cardsForPageQueryKey(input.page_id) });
+      queryClient.invalidateQueries({ queryKey: cardsForBinderQueryKey(card.binder_id) });
+      queryClient.invalidateQueries({ queryKey: pagesForBinderQueryKey(card.binder_id) });
       queryClient.invalidateQueries({ queryKey: bindersQueryKey(userId) });
     },
   });

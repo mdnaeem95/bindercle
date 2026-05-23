@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 
 export const cardsForBinderQueryKey = (binderId: string) =>
   ['cards', 'by-binder', binderId] as const;
+export const cardsForPageQueryKey = (pageId: string) => ['cards', 'by-page', pageId] as const;
 export const cardQueryKey = (cardId: string) => ['card', cardId] as const;
 
 export type CardWithExtras = Card & {
@@ -35,6 +36,18 @@ async function fetchCardsForBinder(binderId: string): Promise<CardWithExtras[]> 
   return (data ?? []).map((row) => normalize(row as Record<string, unknown>));
 }
 
+async function fetchCardsForPage(pageId: string): Promise<CardWithExtras[]> {
+  const { data, error } = await supabase
+    .from('cards')
+    .select(CARDS_SELECT)
+    .eq('page_id', pageId)
+    .order('position', { ascending: true })
+    .order('created_at', { ascending: true });
+
+  if (error) throw error;
+  return (data ?? []).map((row) => normalize(row as Record<string, unknown>));
+}
+
 async function fetchCard(cardId: string): Promise<CardWithExtras> {
   const { data, error } = await supabase
     .from('cards')
@@ -53,6 +66,17 @@ export function useCardsForBinder(binderId: string | undefined) {
       return fetchCardsForBinder(binderId);
     },
     enabled: !!binderId,
+  });
+}
+
+export function useCardsForPage(pageId: string | undefined) {
+  return useQuery({
+    queryKey: cardsForPageQueryKey(pageId ?? ''),
+    queryFn: () => {
+      if (!pageId) throw new Error('Missing pageId');
+      return fetchCardsForPage(pageId);
+    },
+    enabled: !!pageId,
   });
 }
 

@@ -1,5 +1,10 @@
 import { bindersQueryKey } from '@/hooks/useBinders';
-import { type CardWithExtras, cardsForBinderQueryKey } from '@/hooks/useCards';
+import {
+  type CardWithExtras,
+  cardsForBinderQueryKey,
+  cardsForPageQueryKey,
+} from '@/hooks/useCards';
+import { pagesForBinderQueryKey } from '@/hooks/usePages';
 import { trackEvent } from '@/lib/observability';
 import { supabase } from '@/lib/supabase';
 import { useAuthStore } from '@/stores/auth';
@@ -8,6 +13,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 interface DeleteCardInput {
   id: string;
   binder_id: string;
+  page_id?: string;
 }
 
 export function useDeleteCard() {
@@ -40,6 +46,10 @@ export function useDeleteCard() {
     onSuccess: (_data, input) => {
       trackEvent('card_deleted', { card_id: input.id });
       queryClient.invalidateQueries({ queryKey: bindersQueryKey(userId) });
+      queryClient.invalidateQueries({ queryKey: pagesForBinderQueryKey(input.binder_id) });
+      if (input.page_id) {
+        queryClient.invalidateQueries({ queryKey: cardsForPageQueryKey(input.page_id) });
+      }
     },
   });
 }

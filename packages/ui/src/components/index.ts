@@ -9,3 +9,4 @@ export { BinderCard } from './BinderCard';
 export { CardThumbnail } from './CardThumbnail';
 export { ChipGroup } from './ChipGroup';
 export { AccentPicker } from './AccentPicker';
+export { PageThumbnail } from './PageThumbnail';
