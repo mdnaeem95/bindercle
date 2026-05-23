@@ -43,6 +43,25 @@ export async function resizeImage(uri: string, maxDimension: number): Promise<{ 
   return { uri: result.uri };
 }
 
+async function uploadToBucket(
+  bucket: 'avatars' | 'binder-covers' | 'card-photos',
+  path: string,
+  localUri: string,
+  maxDimension: number,
+): Promise<string> {
+  const resized = await resizeImage(localUri, maxDimension);
+  const response = await fetch(resized.uri);
+  const arrayBuffer = await response.arrayBuffer();
+
+  const { error } = await supabase.storage.from(bucket).upload(path, arrayBuffer, {
+    contentType: 'image/jpeg',
+    upsert: true,
+  });
+  if (error) throw error;
+
+  return supabase.storage.from(bucket).getPublicUrl(path).data.publicUrl;
+}
+
 /**
  * Upload an avatar image to the `avatars` storage bucket and return its public URL.
  *
@@ -50,22 +69,23 @@ export async function resizeImage(uri: string, maxDimension: number): Promise<{ 
  * RLS policy in the storage_buckets migration.
  */
 export async function uploadAvatar(userId: string, localUri: string): Promise<string> {
-  // Resize to 512x512 — generous for avatar but keeps storage costs sane
-  const resized = await resizeImage(localUri, 512);
+  return uploadToBucket('avatars', `${userId}/avatar-${Date.now()}.jpg`, localUri, 512);
+}
 
-  // Read the file as a Blob
-  const response = await fetch(resized.uri);
-  const arrayBuffer = await response.arrayBuffer();
-
-  const path = `${userId}/avatar-${Date.now()}.jpg`;
-
-  const { error: uploadError } = await supabase.storage.from('avatars').upload(path, arrayBuffer, {
-    contentType: 'image/jpeg',
-    upsert: true,
-  });
-
-  if (uploadError) throw uploadError;
-
-  const { data } = supabase.storage.from('avatars').getPublicUrl(path);
-  return data.publicUrl;
+/**
+ * Upload a binder cover image. Path convention: `{userId}/{binderId}/cover-{timestamp}.jpg`.
+ * Pass `tempBinderId` of "new" when uploading before the binder row exists; the caller
+ * is responsible for moving / linking the URL.
+ */
+export async function uploadBinderCover(
+  userId: string,
+  binderId: string,
+  localUri: string,
+): Promise<string> {
+  return uploadToBucket(
+    'binder-covers',
+    `${userId}/${binderId}/cover-${Date.now()}.jpg`,
+    localUri,
+    1200,
+  );
 }
