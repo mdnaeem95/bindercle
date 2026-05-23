@@ -10,6 +10,8 @@ type CardThumbnailProps = {
   photoUrl?: string | null;
   /** Number of photos attached (>1 shows a badge). */
   photoCount?: number;
+  /** Optional caption — shows as a small overlay strip at the bottom. */
+  caption?: string | null;
   onPress?: () => void;
   /** Standard Pokemon TCG aspect — 63:88 ≈ 0.716. */
   aspectRatio?: number;
@@ -26,6 +28,7 @@ export function CardThumbnail({
   name,
   photoUrl,
   photoCount = 0,
+  caption,
   onPress,
   aspectRatio = 63 / 88,
   style,
@@ -84,6 +87,28 @@ export function CardThumbnail({
         >
           <Text variant="caption" style={{ color: '#F8F8F2' }}>
             {photoCount}
+          </Text>
+        </View>
+      )}
+
+      {caption && (
+        <View
+          style={{
+            position: 'absolute',
+            left: 0,
+            right: 0,
+            bottom: 0,
+            paddingHorizontal: 8,
+            paddingVertical: 6,
+            backgroundColor: 'rgba(10,10,15,0.78)',
+          }}
+        >
+          <Text
+            variant="caption"
+            numberOfLines={2}
+            style={{ color: '#F8F8F2', fontStyle: 'italic' }}
+          >
+            {caption}
           </Text>
         </View>
       )}

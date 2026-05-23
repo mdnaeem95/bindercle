@@ -1,7 +1,7 @@
 import { useBinders } from '@/hooks/useBinders';
 import { useProfile } from '@/hooks/useProfile';
 import { useAuthStore } from '@/stores/auth';
-import { Avatar, BinderCard, Button, Surface, Text, useTheme } from '@foilio/ui';
+import { type AccentColor, Avatar, BinderCard, Button, Surface, Text, useTheme } from '@foilio/ui';
 import { Redirect, router } from 'expo-router';
 import { ActivityIndicator, FlatList, Pressable, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -18,14 +18,15 @@ export default function HomeScreen() {
 
   const renderEmptyState = () => (
     <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: 40, gap: 16 }}>
-      <Text variant="display2" align="center" tone="secondary">
-        your collection,{'\n'}on display
+      <Text variant="display2" align="center">
+        nothing here yet 🌱
       </Text>
-      <Text variant="body" tone="tertiary" align="center">
-        Create your first binder to get started.
+      <Text variant="body" tone="secondary" align="center">
+        Make a binder of dabbing Pokemon. Or shiny Eevees. Or hat-wearing anybodies. The theme is
+        the joke.
       </Text>
       <Button variant="primary" size="md" onPress={() => router.push('/binders/new')}>
-        Create binder
+        Make my first binder
       </Button>
     </View>
   );
@@ -50,7 +51,7 @@ export default function HomeScreen() {
               size={36}
             />
           </Pressable>
-          <Text variant="heading2">Your binders</Text>
+          <Text variant="heading2">my binders</Text>
           <Pressable
             onPress={() => router.push('/binders/new')}
             hitSlop={12}
@@ -90,6 +91,7 @@ export default function HomeScreen() {
                   cardCount={item.card_count}
                   coverImageUrl={item.cover_image_url}
                   isPublic={item.is_public}
+                  accent={(item.accent_color as AccentColor | null) ?? null}
                   onPress={() => router.push(`/binders/${item.id}`)}
                 />
               </View>

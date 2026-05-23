@@ -1,6 +1,8 @@
+import { CardLayout } from '@/components/CardLayout';
 import { useBinder } from '@/hooks/useBinder';
 import { useCardsForBinder } from '@/hooks/useCards';
-import { Button, CardThumbnail, Surface, Text, useTheme } from '@foilio/ui';
+import type { BinderLayout } from '@/lib/validators/binder';
+import { type AccentColor, Button, Surface, Text, accentSolid, useTheme } from '@foilio/ui';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Image, Pressable, View } from 'react-native';
 import Animated, {
@@ -41,6 +43,7 @@ export default function BinderDetailScreen() {
   }
 
   const cardCount = cards?.length ?? 0;
+  const accentTint = accentSolid(binder.accent_color as AccentColor | null);
 
   return (
     <Surface level={0} style={{ flex: 1 }}>
@@ -118,7 +121,9 @@ export default function BinderDetailScreen() {
         {/* Meta */}
         <View style={{ padding: 24, gap: 16 }}>
           <View style={{ gap: 8 }}>
-            <Text variant="heading1">{binder.title}</Text>
+            <Text variant="heading1" style={accentTint ? { color: accentTint } : undefined}>
+              {binder.title}
+            </Text>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
               <Text variant="caption" tone="tertiary">
                 {cardCount} {cardCount === 1 ? 'card' : 'cards'}
@@ -172,7 +177,7 @@ export default function BinderDetailScreen() {
                 size="sm"
                 onPress={() => router.push(`/binders/${binder.id}/cards/new`)}
               >
-                Add card
+                + Add one
               </Button>
             </View>
 
@@ -189,26 +194,19 @@ export default function BinderDetailScreen() {
                   borderColor: theme.colors.borderSubtle,
                 }}
               >
-                <Text variant="body" tone="secondary" align="center">
-                  No cards yet
+                <Text variant="body" align="center">
+                  empty binder, full potential 💫
                 </Text>
-                <Text variant="caption" tone="tertiary" align="center">
-                  Tap “Add card” to upload your first.
+                <Text variant="caption" tone="secondary" align="center">
+                  Drop in a card. Tell its story. Build the vibe.
                 </Text>
               </View>
             ) : (
-              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-                {(cards ?? []).map((card) => (
-                  <View key={card.id} style={{ width: '31.5%' }}>
-                    <CardThumbnail
-                      name={card.name}
-                      photoUrl={card.photos[0]?.url ?? card.tcg_card?.image_small ?? null}
-                      photoCount={card.photos.length}
-                      onPress={() => router.push(`/cards/${card.id}`)}
-                    />
-                  </View>
-                ))}
-              </View>
+              <CardLayout
+                layout={(binder.layout_type as BinderLayout) ?? 'grid'}
+                cards={cards ?? []}
+                onCardPress={(cardId) => router.push(`/cards/${cardId}`)}
+              />
             )}
           </View>
         </View>

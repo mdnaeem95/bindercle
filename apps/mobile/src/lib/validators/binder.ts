@@ -1,9 +1,20 @@
+import { ACCENT_COLORS } from '@foilio/ui';
 import { z } from 'zod';
 
 /**
  * Binder field validators — mirror the DB CHECK constraints in
- * supabase/migrations/20260522121023_initial_schema.sql.
+ * supabase migrations.
  */
+
+export const BINDER_LAYOUTS = ['grid', 'nine_pocket', 'scrapbook', 'spread'] as const;
+export type BinderLayout = (typeof BINDER_LAYOUTS)[number];
+
+export const BINDER_LAYOUT_LABELS: Record<BinderLayout, string> = {
+  grid: 'Grid',
+  nine_pocket: '9-pocket',
+  scrapbook: 'Scrapbook',
+  spread: 'Spread',
+};
 
 export const binderFormSchema = z.object({
   title: z
@@ -14,6 +25,8 @@ export const binderFormSchema = z.object({
   description: z.string().max(1000, 'At most 1000 characters').optional().or(z.literal('')),
   is_public: z.boolean(),
   tags: z.array(z.string()).max(10, 'At most 10 tags'),
+  accent_color: z.enum(ACCENT_COLORS).optional(),
+  layout_type: z.enum(BINDER_LAYOUTS),
 });
 
 export type BinderFormValues = z.infer<typeof binderFormSchema>;

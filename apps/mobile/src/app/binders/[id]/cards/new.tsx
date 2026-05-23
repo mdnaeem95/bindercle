@@ -46,6 +46,7 @@ export default function NewCardScreen() {
     resolver: zodResolver(cardFormSchema),
     defaultValues: {
       name: '',
+      caption: '',
       set_code: '',
       set_number: '',
       rarity: '',
@@ -139,6 +140,7 @@ export default function NewCardScreen() {
       const card = await createCard.mutateAsync({
         binder_id: binderId,
         name: values.name,
+        caption: values.caption?.trim() || null,
         set_code: values.set_code?.trim() || null,
         set_number: values.set_number?.trim() || null,
         rarity: values.rarity?.trim() || null,
@@ -180,7 +182,7 @@ export default function NewCardScreen() {
                 Cancel
               </Text>
             </Pressable>
-            <Text variant="heading3">Add a card</Text>
+            <Text variant="heading3">add a card</Text>
             <Button
               variant="ghost"
               size="sm"
@@ -334,6 +336,25 @@ export default function NewCardScreen() {
                 <TcgCardSuggestions query={nameQuery} onSelect={onPickTcgCard} />
               )}
             </View>
+
+            {/* Caption — the story */}
+            <Controller
+              control={control}
+              name="caption"
+              render={({ field: { value, onChange, onBlur } }) => (
+                <Input
+                  label="Caption"
+                  placeholder="A line of story for this card…"
+                  hint="Got it on my 10th birthday. Pulled at midnight. Etc."
+                  error={errors.caption?.message}
+                  value={value ?? ''}
+                  onChangeText={onChange}
+                  onBlur={onBlur}
+                  maxLength={140}
+                  showCharCount
+                />
+              )}
+            />
 
             {/* Set code + number — side by side */}
             <View style={{ flexDirection: 'row', gap: 12 }}>

@@ -79,7 +79,7 @@ export default function CardDetailScreen() {
             }}
           >
             <Text variant="caption" tone="tertiary">
-              Official art · add your own photo to make it yours
+              Official art — your own photo will replace this 📸
             </Text>
           </View>
         )}
@@ -150,7 +150,18 @@ export default function CardDetailScreen() {
 
         {/* Meta */}
         <View style={{ padding: 24, gap: 16 }}>
-          <Text variant="heading1">{card.name}</Text>
+          <View style={{ gap: 8 }}>
+            <Text variant="heading1">{card.name}</Text>
+            {card.caption && (
+              <Text
+                variant="bodyLarge"
+                tone="primary"
+                style={{ fontStyle: 'italic', lineHeight: 28 }}
+              >
+                {card.caption}
+              </Text>
+            )}
+          </View>
 
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
             {card.set_code && (

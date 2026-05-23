@@ -1,10 +1,17 @@
+import { BinderTemplatePicker } from '@/components/BinderTemplatePicker';
 import { TagPicker } from '@/components/TagPicker';
 import { useCreateBinder } from '@/hooks/useCreateBinder';
+import type { BinderTemplate } from '@/lib/binderTemplates';
 import { supabase } from '@/lib/supabase';
 import { pickImage, uploadBinderCover } from '@/lib/uploads';
-import { type BinderFormValues, binderFormSchema } from '@/lib/validators/binder';
+import {
+  BINDER_LAYOUTS,
+  BINDER_LAYOUT_LABELS,
+  type BinderFormValues,
+  binderFormSchema,
+} from '@/lib/validators/binder';
 import { useAuthStore } from '@/stores/auth';
-import { Button, Input, Surface, Text, useTheme } from '@foilio/ui';
+import { AccentPicker, Button, ChipGroup, Input, Surface, Text, useTheme } from '@foilio/ui';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { router } from 'expo-router';
 import { useState } from 'react';
@@ -27,10 +34,12 @@ export default function NewBinderScreen() {
   const createBinder = useCreateBinder();
   const [coverUri, setCoverUri] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [showTemplatePicker, setShowTemplatePicker] = useState(true);
 
   const {
     control,
     handleSubmit,
+    reset,
     formState: { errors, isSubmitting },
   } = useForm<BinderFormValues>({
     resolver: zodResolver(binderFormSchema),
@@ -39,8 +48,28 @@ export default function NewBinderScreen() {
       description: '',
       is_public: true,
       tags: [],
+      accent_color: undefined,
+      layout_type: 'grid',
     },
   });
+
+  const applyTemplate = (template: BinderTemplate) => {
+    reset({
+      title: template.preset.title,
+      description: template.preset.description,
+      is_public: true,
+      tags: template.preset.tags,
+      accent_color: template.preset.accent_color,
+      layout_type: template.preset.layout_type,
+    });
+    setShowTemplatePicker(false);
+  };
+
+  if (showTemplatePicker) {
+    return (
+      <BinderTemplatePicker onPick={applyTemplate} onSkip={() => setShowTemplatePicker(false)} />
+    );
+  }
 
   const onPickCover = async () => {
     try {
@@ -59,6 +88,8 @@ export default function NewBinderScreen() {
         title: values.title,
         description: values.description?.trim() || null,
         is_public: values.is_public,
+        accent_color: values.accent_color ?? null,
+        layout_type: values.layout_type,
         tags: values.tags,
       });
 
@@ -103,7 +134,7 @@ export default function NewBinderScreen() {
                 Cancel
               </Text>
             </Pressable>
-            <Text variant="heading3">New binder</Text>
+            <Text variant="heading3">new binder</Text>
             <Button
               variant="ghost"
               size="sm"
@@ -145,8 +176,8 @@ export default function NewBinderScreen() {
                     resizeMode="cover"
                   />
                 ) : (
-                  <Text variant="body" tone="tertiary">
-                    Tap to choose a cover
+                  <Text variant="body" tone="secondary">
+                    Tap to pick a cover ✨
                   </Text>
                 )}
               </Pressable>
@@ -194,6 +225,41 @@ export default function NewBinderScreen() {
               name="tags"
               render={({ field: { value, onChange } }) => (
                 <TagPicker label="Tags" value={value} onChange={onChange} />
+              )}
+            />
+
+            {/* Accent color — personality */}
+            <Controller
+              control={control}
+              name="accent_color"
+              render={({ field: { value, onChange } }) => (
+                <AccentPicker
+                  label="Accent color (optional)"
+                  value={value ?? null}
+                  onChange={onChange}
+                />
+              )}
+            />
+
+            {/* Layout */}
+            <Controller
+              control={control}
+              name="layout_type"
+              render={({ field: { value, onChange } }) => (
+                <View style={{ gap: 8 }}>
+                  <Text variant="caption" tone="secondary">
+                    Layout
+                  </Text>
+                  <ChipGroup
+                    clearable={false}
+                    options={BINDER_LAYOUTS.map((layout) => ({
+                      value: layout,
+                      label: BINDER_LAYOUT_LABELS[layout],
+                    }))}
+                    value={value}
+                    onChange={(next) => onChange(next ?? 'grid')}
+                  />
+                </View>
               )}
             />
 

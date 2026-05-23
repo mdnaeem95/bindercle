@@ -12,6 +12,8 @@ interface CreateBinderInput {
   description?: string | null;
   cover_image_url?: string | null;
   is_public: boolean;
+  accent_color?: string | null;
+  layout_type?: string;
   tags: string[];
 }
 
@@ -31,6 +33,8 @@ export function useCreateBinder() {
           description: input.description ?? null,
           cover_image_url: input.cover_image_url ?? null,
           is_public: input.is_public,
+          accent_color: input.accent_color ?? null,
+          layout_type: input.layout_type ?? 'grid',
         })
         .select('*')
         .single();

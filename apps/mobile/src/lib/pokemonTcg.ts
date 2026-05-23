@@ -1,3 +1,5 @@
+import { normalizeRarity } from './enrichment';
+
 /**
  * TCGdex client — wraps https://api.tcgdex.net/v2.
  *
@@ -97,7 +99,7 @@ function fullToCard(full: TcgdexCardFull): TcgApiCard {
     id: full.id,
     name: full.name,
     number: full.localId,
-    rarity: full.rarity,
+    rarity: normalizeRarity(full.rarity) ?? undefined,
     artist: full.illustrator,
     set: {
       id: full.set.id,

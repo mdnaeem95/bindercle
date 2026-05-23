@@ -3,9 +3,23 @@ import { useBinder } from '@/hooks/useBinder';
 import { useDeleteBinder } from '@/hooks/useDeleteBinder';
 import { useUpdateBinder } from '@/hooks/useUpdateBinder';
 import { pickImage, uploadBinderCover } from '@/lib/uploads';
-import { type BinderFormValues, binderFormSchema } from '@/lib/validators/binder';
+import {
+  BINDER_LAYOUTS,
+  BINDER_LAYOUT_LABELS,
+  type BinderFormValues,
+  binderFormSchema,
+} from '@/lib/validators/binder';
 import { useAuthStore } from '@/stores/auth';
-import { Button, Input, Surface, Text, useTheme } from '@foilio/ui';
+import {
+  type AccentColor,
+  AccentPicker,
+  Button,
+  ChipGroup,
+  Input,
+  Surface,
+  Text,
+  useTheme,
+} from '@foilio/ui';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
@@ -43,6 +57,8 @@ export default function EditBinderScreen() {
       description: binder?.description ?? '',
       is_public: binder?.is_public ?? true,
       tags: binder?.tags.map((t) => t.name) ?? [],
+      accent_color: (binder?.accent_color as AccentColor | null) ?? undefined,
+      layout_type: (binder?.layout_type as BinderFormValues['layout_type']) ?? 'grid',
     },
     values: binder
       ? {
@@ -50,6 +66,8 @@ export default function EditBinderScreen() {
           description: binder.description ?? '',
           is_public: binder.is_public,
           tags: binder.tags.map((t) => t.name),
+          accent_color: (binder.accent_color as AccentColor | null) ?? undefined,
+          layout_type: (binder.layout_type as BinderFormValues['layout_type']) ?? 'grid',
         }
       : undefined,
   });
@@ -79,6 +97,8 @@ export default function EditBinderScreen() {
           description: values.description?.trim() || null,
           is_public: values.is_public,
           cover_image_url: coverUrl,
+          accent_color: values.accent_color ?? null,
+          layout_type: values.layout_type,
         },
         tags: values.tags,
       });
@@ -152,7 +172,7 @@ export default function EditBinderScreen() {
                 Cancel
               </Text>
             </Pressable>
-            <Text variant="heading3">Edit binder</Text>
+            <Text variant="heading3">edit binder</Text>
             <Button
               variant="ghost"
               size="sm"
@@ -193,8 +213,8 @@ export default function EditBinderScreen() {
                     resizeMode="cover"
                   />
                 ) : (
-                  <Text variant="body" tone="tertiary">
-                    Tap to choose a cover
+                  <Text variant="body" tone="secondary">
+                    Tap to pick a cover ✨
                   </Text>
                 )}
               </Pressable>
@@ -238,6 +258,39 @@ export default function EditBinderScreen() {
               name="tags"
               render={({ field: { value, onChange } }) => (
                 <TagPicker label="Tags" value={value} onChange={onChange} />
+              )}
+            />
+
+            <Controller
+              control={control}
+              name="accent_color"
+              render={({ field: { value, onChange } }) => (
+                <AccentPicker
+                  label="Accent color (optional)"
+                  value={value ?? null}
+                  onChange={onChange}
+                />
+              )}
+            />
+
+            <Controller
+              control={control}
+              name="layout_type"
+              render={({ field: { value, onChange } }) => (
+                <View style={{ gap: 8 }}>
+                  <Text variant="caption" tone="secondary">
+                    Layout
+                  </Text>
+                  <ChipGroup
+                    clearable={false}
+                    options={BINDER_LAYOUTS.map((layout) => ({
+                      value: layout,
+                      label: BINDER_LAYOUT_LABELS[layout],
+                    }))}
+                    value={value}
+                    onChange={(next) => onChange(next ?? 'grid')}
+                  />
+                </View>
               )}
             />
 

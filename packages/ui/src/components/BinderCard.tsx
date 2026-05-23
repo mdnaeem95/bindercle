@@ -1,4 +1,5 @@
 import { Image, Pressable, type StyleProp, View, type ViewStyle } from 'react-native';
+import { type AccentColor, accentGlow, accentSolid } from '../accentColors';
 import { useTheme } from '../theme';
 import { radius, spacing } from '../tokens';
 import { Text } from './Text';
@@ -8,6 +9,8 @@ type BinderCardProps = {
   cardCount?: number;
   coverImageUrl?: string | null;
   isPublic?: boolean;
+  /** Optional accent color — renders a soft glow border and tints the title. */
+  accent?: AccentColor | null;
   onPress?: () => void;
   /** Aspect ratio (width/height). Default 3:4 — vertical, hero-friendly. */
   aspectRatio?: number;
@@ -27,11 +30,14 @@ export function BinderCard({
   cardCount,
   coverImageUrl,
   isPublic = true,
+  accent,
   onPress,
   aspectRatio = 3 / 4,
   style,
 }: BinderCardProps) {
   const theme = useTheme();
+  const accentTint = accentSolid(accent);
+  const accentWash = accentGlow(accent);
 
   return (
     <Pressable
@@ -43,6 +49,8 @@ export function BinderCard({
           overflow: 'hidden',
           backgroundColor: theme.colors.bgElevated1,
           opacity: pressed ? 0.85 : 1,
+          borderWidth: accent ? 2 : 0,
+          borderColor: accentTint ?? 'transparent',
         },
         style,
       ]}
@@ -70,6 +78,21 @@ export function BinderCard({
         </View>
       )}
 
+      {/* Accent wash — only renders when an accent is set */}
+      {accentWash && (
+        <View
+          pointerEvents="none"
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: accentWash,
+          }}
+        />
+      )}
+
       {/* Gradient overlay for text legibility */}
       <View
         style={{
@@ -81,7 +104,7 @@ export function BinderCard({
           backgroundColor: 'rgba(10,10,15,0.65)',
         }}
       >
-        <Text variant="heading3" numberOfLines={2} style={{ color: '#F8F8F2' }}>
+        <Text variant="heading3" numberOfLines={2} style={{ color: accentTint ?? '#F8F8F2' }}>
           {title}
         </Text>
         <View

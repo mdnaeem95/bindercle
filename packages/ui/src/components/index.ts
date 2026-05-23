@@ -8,3 +8,4 @@ export { Avatar } from './Avatar';
 export { BinderCard } from './BinderCard';
 export { CardThumbnail } from './CardThumbnail';
 export { ChipGroup } from './ChipGroup';
+export { AccentPicker } from './AccentPicker';

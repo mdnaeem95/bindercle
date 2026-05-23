@@ -11,6 +11,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 interface CreateCardInput {
   binder_id: string;
   name: string;
+  caption?: string | null;
   set_code?: string | null;
   set_number?: string | null;
   rarity?: string | null;
@@ -42,6 +43,7 @@ export function useCreateCard() {
           binder_id: input.binder_id,
           owner_id: userId,
           name: input.name,
+          caption: input.caption ?? null,
           set_code: input.set_code ?? null,
           set_number: input.set_number ?? null,
           rarity: input.rarity ?? null,

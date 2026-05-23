@@ -51,6 +51,7 @@ export default function EditCardScreen() {
     resolver: zodResolver(cardFormSchema),
     defaultValues: {
       name: card?.name ?? '',
+      caption: card?.caption ?? '',
       set_code: card?.set_code ?? '',
       set_number: card?.set_number ?? '',
       rarity: card?.rarity ?? '',
@@ -60,6 +61,7 @@ export default function EditCardScreen() {
     values: card
       ? {
           name: card.name,
+          caption: card.caption ?? '',
           set_code: card.set_code ?? '',
           set_number: card.set_number ?? '',
           rarity: card.rarity ?? '',
@@ -96,6 +98,7 @@ export default function EditCardScreen() {
         binder_id: card.binder_id,
         updates: {
           name: values.name,
+          caption: values.caption?.trim() || null,
           set_code: values.set_code?.trim() || null,
           set_number: values.set_number?.trim() || null,
           rarity: values.rarity?.trim() || null,
@@ -166,7 +169,7 @@ export default function EditCardScreen() {
                 Cancel
               </Text>
             </Pressable>
-            <Text variant="heading3">Edit card</Text>
+            <Text variant="heading3">edit card</Text>
             <Button
               variant="ghost"
               size="sm"
@@ -254,6 +257,24 @@ export default function EditCardScreen() {
                 <TcgCardSuggestions query={nameQuery} onSelect={onPickTcgCard} />
               )}
             </View>
+
+            <Controller
+              control={control}
+              name="caption"
+              render={({ field: { value, onChange, onBlur } }) => (
+                <Input
+                  label="Caption"
+                  placeholder="A line of story for this card…"
+                  hint="One sentence. The cute lives here."
+                  error={errors.caption?.message}
+                  value={value ?? ''}
+                  onChangeText={onChange}
+                  onBlur={onBlur}
+                  maxLength={140}
+                  showCharCount
+                />
+              )}
+            />
 
             <View style={{ flexDirection: 'row', gap: 12 }}>
               <Controller

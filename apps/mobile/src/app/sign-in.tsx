@@ -68,7 +68,7 @@ export default function SignInScreen() {
         <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', gap: 16 }}>
           <FoilioWordmark size={64} />
           <Text variant="display2" tone="secondary" align="center">
-            your collection, on display
+            show off your cute collection
           </Text>
         </View>
 

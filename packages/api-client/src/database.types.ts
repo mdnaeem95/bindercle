@@ -49,31 +49,37 @@ export type Database = {
       }
       binders: {
         Row: {
+          accent_color: string | null
           cover_image_url: string | null
           created_at: string
           description: string | null
           id: string
           is_public: boolean
+          layout_type: string
           owner_id: string
           title: string
           updated_at: string
         }
         Insert: {
+          accent_color?: string | null
           cover_image_url?: string | null
           created_at?: string
           description?: string | null
           id?: string
           is_public?: boolean
+          layout_type?: string
           owner_id: string
           title: string
           updated_at?: string
         }
         Update: {
+          accent_color?: string | null
           cover_image_url?: string | null
           created_at?: string
           description?: string | null
           id?: string
           is_public?: boolean
+          layout_type?: string
           owner_id?: string
           title?: string
           updated_at?: string
@@ -123,6 +129,7 @@ export type Database = {
       cards: {
         Row: {
           binder_id: string
+          caption: string | null
           condition: string | null
           created_at: string
           id: string
@@ -138,6 +145,7 @@ export type Database = {
         }
         Insert: {
           binder_id: string
+          caption?: string | null
           condition?: string | null
           created_at?: string
           id?: string
@@ -153,6 +161,7 @@ export type Database = {
         }
         Update: {
           binder_id?: string
+          caption?: string | null
           condition?: string | null
           created_at?: string
           id?: string

@@ -1,6 +1,11 @@
-# Foilio — Brand Identity v1.0
+# Foilio — Brand Identity v1.1
 
-*Direction: **Holo Luxe**. Locked 2026-05-22.*
+*Visual direction: **Holo Luxe** (locked 2026-05-22). Behavioral direction: **playful warmth** (revised 2026-05-23).*
+
+> The visual system (palette, type, tokens) stays Holo Luxe — dark, refined, considered.
+> The *behavior* (voice, copy, microinteractions, empty states) leans warm and playful — this is a Pinterest-style showcase for *cute themed collections*, not a museum app.
+
+**Note on the v1.0 → v1.1 shift:** the original spec leaned hard on restraint ("refined, luminous, insider, quietly playful"). After early prototyping, the app started feeling closer to a premium TCG catalog than a place to show off "Pokemon dabbing" master sets. v1.1 keeps the visual identity that's already in code — the dark Holo Luxe canvas reads beautifully against bright user content — but loosens the *voice* so the app actually invites the playful curation the product is supposed to celebrate.
 
 > All values in this document are build-ready — they should flow directly into design tokens, component variables, and Skia shaders.
 
@@ -18,21 +23,24 @@
 
 ## 2. Personality
 
-Four attributes, ranked by priority:
+Four attributes, ranked by priority. **Visual reads from #1 + #2; behavior reads from #3 + #4.**
 
 | # | Attribute | What it means in product |
 |---|-----------|--------------------------|
-| 1 | **Refined** | Reduced chrome. Generous space. Type and color do the heavy lifting, not decoration. |
-| 2 | **Luminous** | Light moves. Holo cards shimmer with gyro tilt. Surfaces have subtle gradient depth. |
-| 3 | **Insider** | Collector vocabulary (hits, pulls, sets, sleeves) used naturally — never explained, never gatekept. |
-| 4 | **Quietly playful** | One smirk per screen. Loading states have personality. Empty states have warmth. Never zany. |
+| 1 | **Considered** | Dark canvas, generous space, careful type. Visual quality reads as taste. |
+| 2 | **Luminous** | Light moves where it matters. Holo cards shimmer. Accent colors glow. |
+| 3 | **Playful** | The themes are jokes. Empty states have personality. Microcopy smiles. Lowercase headings. |
+| 4 | **Insider** | Collector vocabulary (hits, pulls, sets, sleeves, slabs) used naturally — never explained, never gatekept. |
+
+The job of the visual identity is to make user content look gorgeous against it. The job of the voice is to give users permission to be *themselves* — silly, sentimental, completionist, weird.
 
 **Anti-patterns (never these):**
 - Corporate ("Discover amazing collections!")
-- Childish ("Wow! So many awesome cards!!!")
+- Stiff / transactional ("Save changes successfully")
 - Bro-y / hype-coded ("Yo collectors, what's poppin'")
 - Crypto / "premium experience" coded ("Unlock exclusive value")
 - Precious / overwrought ("Curate the museum of your soul")
+- Childish in the *bad* way ("Wow! So many awesome cards!!!") — playful, not infantilizing
 
 ---
 
@@ -40,32 +48,37 @@ Four attributes, ranked by priority:
 
 ### Voice (constant)
 
-- **Confident, not loud.** Short sentences. Strong verbs.
-- **Insider-warm.** Uses collector lingo without irony or asterisks.
-- **Aesthetic-aware.** Word choice respects that this is a visual product.
-- **Low filler.** Cut "actually", "just", "simply", "amazing", "incredible".
+- **Warm, not corporate.** Talk like a friend who's also a collector. Use contractions. Use the joke if it lands.
+- **Insider-friendly.** Use collector lingo (pulls, hits, slabs, sleeves) without irony — but also without gatekeeping. Adjacent fans should still feel welcome.
+- **Lowercase by default for headings and labels.** Sentence case in body. ALL-CAPS only for badges. Lowercase is a vibe — Pinterest does it, Are.na does it, it reads as soft.
+- **Specific, not generic.** "dabbing Pokemon master set" beats "your trading card collection." Show, don't lecture.
+- **Short.** Cut "actually", "just", "simply", "amazing", "incredible." A few well-chosen words > a polished sentence.
+- **Emoji sparingly, intentionally.** ✨ 🌱 💫 📸 🥺 — yes, when they earn it. Never a wall of them.
 
 ### Tone matrix (varies by context)
 
 | Context | Tone | Example |
 |---------|------|---------|
-| Onboarding | Warm, light | *"Welcome in. Let's set up your first binder."* |
-| Empty state (own) | Encouraging, not patronizing | *"Your first binder is one tap away."* |
-| Empty state (discovery) | Curatorial | *"Quiet here. Try a different tag."* |
-| Success — small | Understated | *"Saved."* / *"Added."* |
-| Success — milestone | Acknowledge without confetti | *"Set complete. 151 of 151."* |
-| Error | Direct, recovery-focused, never blame | *"Photo didn't upload. Try again?"* |
-| Marketing / launch | Atmospheric, image-led | *"Foilio. Show your shine."* |
+| Onboarding | Warm, inviting | *"show off your cute collection"* |
+| Empty state (own binders) | Playful with a nudge | *"nothing here yet 🌱 — Make a binder of dabbing Pokemon. Or shiny Eevees. The theme is the joke."* |
+| Empty state (in a binder) | Encouraging, specific | *"empty binder, full potential 💫 — Drop in a card. Tell its story. Build the vibe."* |
+| Empty state (discovery) | Quiet redirect | *"quiet over here. try a different tag."* |
+| Success — small | Soft confirm | *"saved ✨"* / *"added"* |
+| Success — milestone | Acknowledge with character | *"that's a master set 🏆 — 151/151"* |
+| Error | Direct, never blame | *"photo didn't upload. try again?"* |
+| Marketing / launch | Atmospheric, specific | *"foilio. show your shine."* |
 
 ### Copy do / don't
 
 | ❌ Don't | ✅ Do |
 |----------|-------|
-| "Discover amazing trading card collections!" | "Find binders worth following." |
-| "Congratulations! You've added another card!" | "Added. 47 cards." |
-| "Oops! Something went wrong!" | "Couldn't save that. Retry?" |
-| "Unleash your inner collector!" | "Show your shine." |
-| "Premium members get exclusive access" | "Foilio Plus. More binders, more polish." |
+| "Discover amazing trading card collections!" | "find a binder you'd want to make." |
+| "Congratulations! You've added another card!" | "added ✨" |
+| "Oops! Something went wrong!" | "couldn't save that. retry?" |
+| "Unleash your inner collector!" | "show your shine." |
+| "Premium members get exclusive access" | "Foilio Plus. more binders, more polish." |
+| "Your collection, on display" | "show off your cute collection" |
+| "No cards yet" | "empty binder, full potential 💫" |
 
 ---
 
