@@ -15,7 +15,15 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
-import { Alert, KeyboardAvoidingView, Platform, Pressable, ScrollView, View } from 'react-native';
+import {
+  Alert,
+  Image,
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  ScrollView,
+  View,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function EditCardScreen() {
@@ -25,11 +33,13 @@ export default function EditCardScreen() {
   const updateCard = useUpdateCard();
   const deleteCard = useDeleteCard();
   const [tcgCardId, setTcgCardId] = useState<string | null>(null);
+  const [tcgCardArt, setTcgCardArt] = useState<string | null>(null);
 
   // Sync the TCG link state from the loaded card row
   useEffect(() => {
     setTcgCardId(card?.tcg_card_id ?? null);
-  }, [card?.tcg_card_id]);
+    setTcgCardArt(card?.tcg_card?.image_small ?? null);
+  }, [card?.tcg_card_id, card?.tcg_card?.image_small]);
 
   const {
     control,
@@ -65,6 +75,7 @@ export default function EditCardScreen() {
     try {
       await mirrorTcgCard(picked);
       setTcgCardId(picked.id);
+      setTcgCardArt(picked.images?.small ?? null);
       setValue('name', picked.name, { shouldDirty: true });
       setValue('set_code', picked.set.id, { shouldDirty: true });
       setValue('set_number', picked.number, { shouldDirty: true });
@@ -194,19 +205,44 @@ export default function EditCardScreen() {
                   style={{
                     flexDirection: 'row',
                     alignItems: 'center',
-                    justifyContent: 'space-between',
+                    gap: 12,
                     paddingHorizontal: 12,
-                    paddingVertical: 8,
+                    paddingVertical: 10,
                     borderRadius: 12,
                     backgroundColor: theme.colors.bgElevated2,
                     borderWidth: 1,
                     borderColor: theme.colors.borderDefault,
                   }}
                 >
-                  <Text variant="caption" tone="secondary">
-                    ✓ Linked to TCG card · {tcgCardId}
-                  </Text>
-                  <Pressable onPress={() => setTcgCardId(null)} hitSlop={6}>
+                  {tcgCardArt && (
+                    <Image
+                      source={{ uri: tcgCardArt }}
+                      style={{
+                        width: 36,
+                        height: 50,
+                        borderRadius: 4,
+                        backgroundColor: theme.colors.bgElevated3,
+                      }}
+                      resizeMode="cover"
+                    />
+                  )}
+                  <View style={{ flex: 1, gap: 2 }}>
+                    <Text variant="caption" tone="secondary">
+                      ✓ Linked to TCG card
+                    </Text>
+                    <Text variant="caption" tone="tertiary" numberOfLines={2}>
+                      {(card?.photos.length ?? 0) === 0
+                        ? 'Official art will display until you add your own.'
+                        : 'Your photos will be shown.'}
+                    </Text>
+                  </View>
+                  <Pressable
+                    onPress={() => {
+                      setTcgCardId(null);
+                      setTcgCardArt(null);
+                    }}
+                    hitSlop={6}
+                  >
                     <Text variant="caption" tone="tertiary">
                       Unlink
                     </Text>

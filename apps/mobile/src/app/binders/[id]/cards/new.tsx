@@ -34,6 +34,7 @@ export default function NewCardScreen() {
   const createCard = useCreateCard();
   const [photos, setPhotos] = useState<string[]>([]);
   const [tcgCardId, setTcgCardId] = useState<string | null>(null);
+  const [tcgCardArt, setTcgCardArt] = useState<string | null>(null);
 
   const {
     control,
@@ -59,6 +60,7 @@ export default function NewCardScreen() {
     try {
       await mirrorTcgCard(card);
       setTcgCardId(card.id);
+      setTcgCardArt(card.images?.small ?? null);
       setValue('name', card.name, { shouldDirty: true });
       setValue('set_code', card.set.id, { shouldDirty: true });
       setValue('set_number', card.number, { shouldDirty: true });
@@ -71,6 +73,7 @@ export default function NewCardScreen() {
 
   const onUnlinkTcgCard = () => {
     setTcgCardId(null);
+    setTcgCardArt(null);
   };
 
   const canAddPhoto = photos.length < PHOTO_LIMIT;
@@ -286,18 +289,37 @@ export default function NewCardScreen() {
                   style={{
                     flexDirection: 'row',
                     alignItems: 'center',
-                    justifyContent: 'space-between',
+                    gap: 12,
                     paddingHorizontal: 12,
-                    paddingVertical: 8,
+                    paddingVertical: 10,
                     borderRadius: 12,
                     backgroundColor: theme.colors.bgElevated2,
                     borderWidth: 1,
                     borderColor: theme.colors.borderDefault,
                   }}
                 >
-                  <Text variant="caption" tone="secondary">
-                    ✓ Linked to TCG card · {tcgCardId}
-                  </Text>
+                  {tcgCardArt && (
+                    <Image
+                      source={{ uri: tcgCardArt }}
+                      style={{
+                        width: 36,
+                        height: 50,
+                        borderRadius: 4,
+                        backgroundColor: theme.colors.bgElevated3,
+                      }}
+                      resizeMode="cover"
+                    />
+                  )}
+                  <View style={{ flex: 1, gap: 2 }}>
+                    <Text variant="caption" tone="secondary">
+                      ✓ Linked to TCG card
+                    </Text>
+                    <Text variant="caption" tone="tertiary" numberOfLines={2}>
+                      {photos.length === 0
+                        ? 'Official art will display until you add your own.'
+                        : 'Your photos will be shown.'}
+                    </Text>
+                  </View>
                   <Pressable onPress={onUnlinkTcgCard} hitSlop={6}>
                     <Text variant="caption" tone="tertiary">
                       Unlink

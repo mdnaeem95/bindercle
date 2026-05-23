@@ -20,15 +20,16 @@ export default function CardDetailScreen() {
     );
   }
 
-  const heroPhoto = card.photos[0];
+  const heroPhotoUrl = card.photos[0]?.url ?? card.tcg_card?.image_large ?? null;
+  const hasUserPhotos = card.photos.length > 0;
 
   return (
     <Surface level={0} style={{ flex: 1 }}>
       <ScrollView contentContainerStyle={{ paddingBottom: 48 }}>
         {/* Hero photo */}
-        {heroPhoto ? (
+        {heroPhotoUrl ? (
           <Image
-            source={{ uri: heroPhoto.url }}
+            source={{ uri: heroPhotoUrl }}
             style={{
               width: '100%',
               aspectRatio: 63 / 88,
@@ -48,6 +49,23 @@ export default function CardDetailScreen() {
           >
             <Text variant="display2" tone="tertiary">
               {card.name.slice(0, 1).toUpperCase()}
+            </Text>
+          </View>
+        )}
+
+        {/* Source indicator when we're showing official art */}
+        {!hasUserPhotos && card.tcg_card?.image_large && (
+          <View
+            style={{
+              paddingHorizontal: 24,
+              paddingTop: 12,
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: 6,
+            }}
+          >
+            <Text variant="caption" tone="tertiary">
+              Official art · add your own photo to make it yours
             </Text>
           </View>
         )}

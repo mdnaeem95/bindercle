@@ -1,43 +1,48 @@
 import { supabase } from '@/lib/supabase';
-import type { Card, CardPhoto } from '@foilio/api-client';
+import type { Card, CardPhoto, PokemonTcgCard } from '@foilio/api-client';
 import { useQuery } from '@tanstack/react-query';
 
 export const cardsForBinderQueryKey = (binderId: string) =>
   ['cards', 'by-binder', binderId] as const;
 export const cardQueryKey = (cardId: string) => ['card', cardId] as const;
 
-export type CardWithPhotos = Card & { photos: CardPhoto[] };
+export type CardWithExtras = Card & {
+  photos: CardPhoto[];
+  /** Linked TCG card with official art — present only when tcg_card_id is set. */
+  tcg_card: Pick<PokemonTcgCard, 'id' | 'image_small' | 'image_large' | 'set_name'> | null;
+};
 
-async function fetchCardsForBinder(binderId: string): Promise<CardWithPhotos[]> {
+const CARDS_SELECT =
+  '*, photos:card_photos(*), tcg_card:pokemon_tcg_cards(id, image_small, image_large, set_name)';
+
+function normalize(row: Record<string, unknown>): CardWithExtras {
+  const photos = ((row.photos as CardPhoto[] | null) ?? [])
+    .slice()
+    .sort((a, b) => a.order_index - b.order_index);
+  const tcg = row.tcg_card as CardWithExtras['tcg_card'];
+  return { ...(row as unknown as Card), photos, tcg_card: tcg ?? null };
+}
+
+async function fetchCardsForBinder(binderId: string): Promise<CardWithExtras[]> {
   const { data, error } = await supabase
     .from('cards')
-    .select('*, photos:card_photos(*)')
+    .select(CARDS_SELECT)
     .eq('binder_id', binderId)
     .order('position', { ascending: true })
     .order('created_at', { ascending: true });
 
   if (error) throw error;
-
-  return (data ?? []).map((row) => {
-    const photos = ((row.photos as CardPhoto[] | null) ?? [])
-      .slice()
-      .sort((a, b) => a.order_index - b.order_index);
-    return { ...row, photos } as CardWithPhotos;
-  });
+  return (data ?? []).map((row) => normalize(row as Record<string, unknown>));
 }
 
-async function fetchCard(cardId: string): Promise<CardWithPhotos> {
+async function fetchCard(cardId: string): Promise<CardWithExtras> {
   const { data, error } = await supabase
     .from('cards')
-    .select('*, photos:card_photos(*)')
+    .select(CARDS_SELECT)
     .eq('id', cardId)
     .single();
   if (error) throw error;
-
-  const photos = ((data.photos as CardPhoto[] | null) ?? [])
-    .slice()
-    .sort((a, b) => a.order_index - b.order_index);
-  return { ...data, photos } as CardWithPhotos;
+  return normalize(data as Record<string, unknown>);
 }
 
 export function useCardsForBinder(binderId: string | undefined) {

@@ -177,7 +177,7 @@ export default function BinderDetailScreen() {
                   <View key={card.id} style={{ width: '31.5%' }}>
                     <CardThumbnail
                       name={card.name}
-                      photoUrl={card.photos[0]?.url ?? null}
+                      photoUrl={card.photos[0]?.url ?? card.tcg_card?.image_small ?? null}
                       photoCount={card.photos.length}
                       onPress={() => router.push(`/cards/${card.id}`)}
                     />

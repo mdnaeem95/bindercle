@@ -1,5 +1,5 @@
 import { bindersQueryKey } from '@/hooks/useBinders';
-import { type CardWithPhotos, cardsForBinderQueryKey } from '@/hooks/useCards';
+import { type CardWithExtras, cardsForBinderQueryKey } from '@/hooks/useCards';
 import { trackEvent } from '@/lib/observability';
 import { supabase } from '@/lib/supabase';
 import { useAuthStore } from '@/stores/auth';
@@ -14,14 +14,14 @@ export function useDeleteCard() {
   const queryClient = useQueryClient();
   const userId = useAuthStore((s) => s.user?.id);
 
-  return useMutation<void, Error, DeleteCardInput, { previous?: CardWithPhotos[] }>({
+  return useMutation<void, Error, DeleteCardInput, { previous?: CardWithExtras[] }>({
     mutationFn: async ({ id }) => {
       const { error } = await supabase.from('cards').delete().eq('id', id);
       if (error) throw error;
     },
     onMutate: async ({ id, binder_id }) => {
       await queryClient.cancelQueries({ queryKey: cardsForBinderQueryKey(binder_id) });
-      const previous = queryClient.getQueryData<CardWithPhotos[]>(
+      const previous = queryClient.getQueryData<CardWithExtras[]>(
         cardsForBinderQueryKey(binder_id),
       );
       if (previous) {
