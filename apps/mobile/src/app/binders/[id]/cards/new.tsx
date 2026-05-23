@@ -68,7 +68,7 @@ export default function NewCardScreen() {
       setTcgCardId(full.id);
       setTcgCardArt(full.images?.small ?? null);
       setValue('name', full.name, { shouldDirty: true });
-      setValue('set_code', full.set.id, { shouldDirty: true });
+      setValue('set_code', full.set.name || full.set.id, { shouldDirty: true });
       setValue('set_number', full.number, { shouldDirty: true });
       if (full.rarity) setValue('rarity', full.rarity, { shouldDirty: true });
     } catch (e) {
@@ -366,7 +366,7 @@ export default function NewCardScreen() {
                   <View style={{ flex: 1 }}>
                     <Input
                       label="Set"
-                      placeholder="Base"
+                      placeholder="Obsidian Flames"
                       error={errors.set_code?.message}
                       value={value ?? ''}
                       onChangeText={onChange}

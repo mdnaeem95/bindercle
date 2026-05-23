@@ -82,7 +82,7 @@ export default function EditCardScreen() {
       setTcgCardId(full.id);
       setTcgCardArt(full.images?.small ?? null);
       setValue('name', full.name, { shouldDirty: true });
-      setValue('set_code', full.set.id, { shouldDirty: true });
+      setValue('set_code', full.set.name || full.set.id, { shouldDirty: true });
       setValue('set_number', full.number, { shouldDirty: true });
       if (full.rarity) setValue('rarity', full.rarity, { shouldDirty: true });
     } catch (e) {

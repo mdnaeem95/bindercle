@@ -31,8 +31,8 @@ export const cardFormSchema = z.object({
     .max(100, 'At most 100 characters')
     .transform((v) => v.trim()),
   caption: z.string().max(140, 'At most 140 characters').optional().or(z.literal('')),
-  set_code: z.string().max(30).optional().or(z.literal('')),
-  set_number: z.string().max(30).optional().or(z.literal('')),
+  set_code: z.string().max(100, 'At most 100 characters').optional().or(z.literal('')),
+  set_number: z.string().max(30, 'At most 30 characters').optional().or(z.literal('')),
   rarity: z.string().max(50).optional().or(z.literal('')),
   condition: z.enum(CARD_CONDITIONS).optional(),
   notes: z.string().max(1000, 'At most 1000 characters').optional().or(z.literal('')),
