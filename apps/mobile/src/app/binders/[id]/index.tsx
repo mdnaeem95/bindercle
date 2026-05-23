@@ -2,7 +2,12 @@ import { useBinder } from '@/hooks/useBinder';
 import { useCardsForBinder } from '@/hooks/useCards';
 import { Button, CardThumbnail, Surface, Text, useTheme } from '@foilio/ui';
 import { router, useLocalSearchParams } from 'expo-router';
-import { Image, Pressable, ScrollView, View } from 'react-native';
+import { Image, Pressable, View } from 'react-native';
+import Animated, {
+  useAnimatedScrollHandler,
+  useAnimatedStyle,
+  useSharedValue,
+} from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function BinderDetailScreen() {
@@ -10,6 +15,20 @@ export default function BinderDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { data: binder, isLoading } = useBinder(id);
   const { data: cards } = useCardsForBinder(id);
+
+  const scrollY = useSharedValue(0);
+  const scrollHandler = useAnimatedScrollHandler((event) => {
+    scrollY.value = event.contentOffset.y;
+  });
+
+  // Hero parallax: image moves at half scroll speed, scales up on overscroll
+  const heroAnimatedStyle = useAnimatedStyle(() => {
+    const overscroll = scrollY.value < 0 ? -scrollY.value : 0;
+    const scale = 1 + overscroll / 400;
+    return {
+      transform: [{ translateY: scrollY.value * 0.5 }, { scale }],
+    };
+  });
 
   if (isLoading || !binder) {
     return (
@@ -25,29 +44,35 @@ export default function BinderDetailScreen() {
 
   return (
     <Surface level={0} style={{ flex: 1 }}>
-      <ScrollView contentContainerStyle={{ paddingBottom: 48 }}>
-        {/* Cover hero */}
-        {binder.cover_image_url ? (
-          <Image
-            source={{ uri: binder.cover_image_url }}
-            style={{ width: '100%', aspectRatio: 3 / 4 }}
-            resizeMode="cover"
-          />
-        ) : (
-          <View
-            style={{
-              width: '100%',
-              aspectRatio: 3 / 4,
-              backgroundColor: theme.colors.bgElevated2,
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            <Text variant="display1" tone="tertiary">
-              {binder.title.slice(0, 1).toUpperCase()}
-            </Text>
-          </View>
-        )}
+      <Animated.ScrollView
+        contentContainerStyle={{ paddingBottom: 48 }}
+        onScroll={scrollHandler}
+        scrollEventThrottle={16}
+      >
+        {/* Cover hero with parallax */}
+        <Animated.View style={heroAnimatedStyle}>
+          {binder.cover_image_url ? (
+            <Image
+              source={{ uri: binder.cover_image_url }}
+              style={{ width: '100%', aspectRatio: 3 / 4 }}
+              resizeMode="cover"
+            />
+          ) : (
+            <View
+              style={{
+                width: '100%',
+                aspectRatio: 3 / 4,
+                backgroundColor: theme.colors.bgElevated2,
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <Text variant="display1" tone="tertiary">
+                {binder.title.slice(0, 1).toUpperCase()}
+              </Text>
+            </View>
+          )}
+        </Animated.View>
 
         <SafeAreaView edges={['top']} style={{ position: 'absolute', top: 0, left: 0, right: 0 }}>
           <View
@@ -187,7 +212,7 @@ export default function BinderDetailScreen() {
             )}
           </View>
         </View>
-      </ScrollView>
+      </Animated.ScrollView>
     </Surface>
   );
 }
