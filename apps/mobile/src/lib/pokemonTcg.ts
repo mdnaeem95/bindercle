@@ -1,44 +1,47 @@
 import { normalizeRarity } from './enrichment';
+import { supabase } from './supabase';
 
 /**
- * TCGdex client — wraps https://api.tcgdex.net/v2.
+ * TCG Price Lookup client (via Supabase Edge Function proxy).
  *
- * Why TCGdex over pokemontcg.io: multilingual (English, French, German,
- * Spanish, Italian, Portuguese, **Japanese**, Korean, Chinese), faster
- * cadence on new set additions, free and open-source.
+ * Calls are routed through `supabase.functions.invoke('tcg-search', ...)`.
+ * The upstream X-API-Key never touches the client bundle — it's a Supabase
+ * Edge Function secret set with `supabase secrets set TCG_API_KEY=...`.
  *
- * The internal `TcgApiCard` shape is intentionally generic — if we ever
- * swap providers again, only this module changes.
+ * Provider chosen over TCGdex for:
+ * - Pre-categorized variants (1st Edition vs Unlimited as separate records)
+ * - Pokemon English (30k+) and Pokemon Japan (20k+) as distinct games
+ * - Built-in pricing data (TCGPlayer + eBay) for future valuation features
  *
- * Image URLs: TCGdex returns an image *stem* like
- * `https://assets.tcgdex.net/en/swsh/swsh4/4`. To display, suffix with
- * `/low.webp` (thumbnail) or `/high.webp` (detail). We do that here so
- * consumers get usable URLs in `images.small` / `images.large`.
+ * Tradeoffs vs TCGdex:
+ * - No illustrator field in response
+ * - No card-level release date (set-level only, not exposed via search)
+ * - Variants-as-separate-records produces more results per name search
+ *   (the UI shows variant info so users can disambiguate)
  */
 
-const BASE_URL = 'https://api.tcgdex.net/v2';
-const LANG = process.env.EXPO_PUBLIC_TCG_LANGUAGE ?? 'en';
+export type TcgGame = 'pokemon' | 'pokemon-japan';
 
-interface TcgdexCardBrief {
+interface TcgPriceLookupCard {
   id: string;
-  localId: string;
+  tcgplayer_id?: string;
   name: string;
-  image?: string | null;
+  number: string;
+  rarity?: string | null;
+  variant?: string | null;
+  image_url?: string | null;
+  set?: { slug?: string; name?: string };
+  game?: { slug?: string; name?: string };
+  prices?: Record<string, unknown>;
+  updated_at?: string;
 }
 
-interface TcgdexCardFull {
-  id: string;
-  localId: string;
-  name: string;
-  image?: string | null;
-  illustrator?: string;
-  rarity?: string;
-  category?: string;
-  set: {
-    id: string;
-    name: string;
-    releaseDate?: string;
-  };
+interface TcgSearchResponse {
+  data?: TcgPriceLookupCard[];
+  // The API may return a bare array on older versions; we accept either shape.
+  limit?: number;
+  offset?: number;
+  total?: number;
 }
 
 interface TcgApiSet {
@@ -58,96 +61,114 @@ export interface TcgApiCard {
   number: string;
   rarity?: string;
   artist?: string;
+  /** Variant from TCG Price Lookup (e.g. "1st Edition Holofoil"). Shown in picker to disambiguate. */
+  variant?: string;
   set: TcgApiSet;
   images?: TcgApiCardImages;
   raw: Record<string, unknown>;
 }
 
-function imageVariants(stem: string | null | undefined): TcgApiCardImages | undefined {
-  if (!stem) return undefined;
+export interface TcgSearchResult {
+  cards: TcgApiCard[];
+  /** Total matching results upstream (for pagination math). */
+  total: number;
+  /** Current offset. */
+  offset: number;
+  /** Page size used. */
+  limit: number;
+}
+
+function mapCard(raw: TcgPriceLookupCard): TcgApiCard {
+  const imageUrl = raw.image_url ?? undefined;
+  const setSlug = raw.set?.slug ?? '';
+  const setName = raw.set?.name ?? setSlug;
+
   return {
-    small: `${stem}/low.webp`,
-    large: `${stem}/high.webp`,
+    id: raw.id,
+    name: raw.name,
+    number: raw.number,
+    rarity: normalizeRarity(raw.rarity) ?? undefined,
+    variant: raw.variant ?? undefined,
+    artist: undefined,
+    set: {
+      id: setSlug,
+      name: setName,
+    },
+    images: imageUrl ? { small: imageUrl, large: imageUrl } : undefined,
+    raw: raw as unknown as Record<string, unknown>,
   };
 }
 
 /**
- * Derive a set code from a TCGdex card ID. Card IDs are formatted as
- * `{setId}-{localId}` so we can parse the set ID until we fetch full details.
- */
-function setCodeFromId(cardId: string): string {
-  const dash = cardId.lastIndexOf('-');
-  return dash > 0 ? cardId.slice(0, dash) : cardId;
-}
-
-function briefToCard(brief: TcgdexCardBrief): TcgApiCard {
-  return {
-    id: brief.id,
-    name: brief.name,
-    number: brief.localId,
-    set: {
-      id: setCodeFromId(brief.id),
-      name: setCodeFromId(brief.id),
-    },
-    images: imageVariants(brief.image),
-    raw: brief as unknown as Record<string, unknown>,
-  };
-}
-
-function fullToCard(full: TcgdexCardFull): TcgApiCard {
-  return {
-    id: full.id,
-    name: full.name,
-    number: full.localId,
-    rarity: normalizeRarity(full.rarity) ?? undefined,
-    artist: full.illustrator,
-    set: {
-      id: full.set.id,
-      name: full.set.name,
-      releaseDate: full.set.releaseDate,
-    },
-    images: imageVariants(full.image),
-    raw: full as unknown as Record<string, unknown>,
-  };
-}
-
-/**
- * Search Pokemon TCG cards by name (substring, case-insensitive).
+ * Search TCG cards.
  *
- * TCGdex's `like:` filter does substring matching — typing "char" matches
- * Charizard, Charmander, Charmeleon. Results are paginated; we take the
- * first page (default 12 items).
- *
- * Returns brief card data — name, number, image — so consumers can render
- * an autocomplete dropdown without N+1 detail fetches. Use `getTcgCardById`
- * for the full details when the user actually picks one.
+ * `offset` + `limit` enable pagination in the suggestions UI (load-more).
+ * `game` defaults to 'pokemon' (English); pass 'pokemon-japan' to search
+ * Japanese sets instead.
  */
-export async function searchTcgCards(query: string, pageSize = 12): Promise<TcgApiCard[]> {
+export async function searchTcgCards(
+  query: string,
+  opts: { limit?: number; offset?: number; game?: TcgGame } = {},
+): Promise<TcgSearchResult> {
   const trimmed = query.trim();
-  if (trimmed.length === 0) return [];
-
-  const url = new URL(`${BASE_URL}/${LANG}/cards`);
-  url.searchParams.set('name', `like:${trimmed}`);
-  url.searchParams.set('pagination:itemsPerPage', String(pageSize));
-
-  const response = await fetch(url.toString());
-  if (!response.ok) {
-    throw new Error(`TCGdex search failed: ${response.status}`);
+  if (trimmed.length === 0) {
+    return { cards: [], total: 0, offset: 0, limit: opts.limit ?? 24 };
   }
-  const data = (await response.json()) as TcgdexCardBrief[];
-  return data.map(briefToCard);
+
+  const { data, error } = await supabase.functions.invoke<TcgSearchResponse | TcgPriceLookupCard[]>(
+    'tcg-search',
+    {
+      body: {
+        q: trimmed,
+        game: opts.game ?? 'pokemon',
+        limit: opts.limit ?? 24,
+        offset: opts.offset ?? 0,
+      },
+    },
+  );
+
+  if (error) throw error;
+  if (!data) {
+    return { cards: [], total: 0, offset: opts.offset ?? 0, limit: opts.limit ?? 24 };
+  }
+
+  const isWrapped = !Array.isArray(data) && Array.isArray(data.data);
+  const rawCards: TcgPriceLookupCard[] = isWrapped
+    ? ((data as TcgSearchResponse).data ?? [])
+    : (data as TcgPriceLookupCard[]);
+
+  const total = isWrapped
+    ? ((data as TcgSearchResponse).total ?? rawCards.length)
+    : rawCards.length;
+  const limit = isWrapped
+    ? ((data as TcgSearchResponse).limit ?? opts.limit ?? 24)
+    : (opts.limit ?? 24);
+  const offset = isWrapped
+    ? ((data as TcgSearchResponse).offset ?? opts.offset ?? 0)
+    : (opts.offset ?? 0);
+
+  return {
+    cards: rawCards.map(mapCard),
+    total,
+    offset,
+    limit,
+  };
 }
 
 /**
- * Fetch a single card by its TCGdex ID (e.g. "swsh4-4").
- * Returns null if the card doesn't exist in the configured language.
+ * Fetch a single card by its TCG Price Lookup ID.
  */
 export async function getTcgCardById(id: string): Promise<TcgApiCard | null> {
-  const response = await fetch(`${BASE_URL}/${LANG}/cards/${encodeURIComponent(id)}`);
-  if (response.status === 404) return null;
-  if (!response.ok) {
-    throw new Error(`TCGdex fetch failed: ${response.status}`);
+  const { data, error } = await supabase.functions.invoke<TcgPriceLookupCard>('tcg-search', {
+    body: { id },
+  });
+
+  if (error) {
+    // Treat 404s from the upstream proxy as "not found" rather than a hard throw.
+    const message = error.message?.toLowerCase() ?? '';
+    if (message.includes('404') || message.includes('not found')) return null;
+    throw error;
   }
-  const data = (await response.json()) as TcgdexCardFull;
-  return fullToCard(data);
+  if (!data) return null;
+  return mapCard(data);
 }

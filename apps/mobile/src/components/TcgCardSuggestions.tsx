@@ -1,28 +1,38 @@
 import { useTcgCardSearch } from '@/hooks/useTcgCardSearch';
-import type { TcgApiCard } from '@/lib/pokemonTcg';
-import { Text, useTheme } from '@foilio/ui';
-import { ActivityIndicator, Image, Pressable, View } from 'react-native';
+import type { TcgApiCard, TcgGame } from '@/lib/pokemonTcg';
+import { Button, ChipGroup, Text, useTheme } from '@foilio/ui';
+import { useState } from 'react';
+import { ActivityIndicator, Image, Pressable, ScrollView, View } from 'react-native';
 
 type TcgCardSuggestionsProps = {
   query: string;
   onSelect: (card: TcgApiCard) => void;
+  /** Override the max height of the scrollable suggestion list (in px). */
+  maxHeight?: number;
 };
 
+const GAME_OPTIONS: { value: TcgGame; label: string }[] = [
+  { value: 'pokemon', label: 'EN' },
+  { value: 'pokemon-japan', label: 'JP' },
+];
+
 /**
- * Inline autocomplete dropdown for the Pokemon TCG card name field.
+ * Inline autocomplete dropdown.
  *
- * Search results come from TCGdex's list endpoint which returns brief data
- * only (id, name, number, image). Full details — rarity, proper set name,
- * illustrator — are fetched when the user actually picks a card.
+ * Renders an EN/JP chip toggle, a scrollable result list (debounced
+ * infinite-query against TCG Price Lookup via our Edge Function), and a
+ * Load-more button when more pages are available.
  *
- * Renders nothing if the query is too short or no results.
+ * Shows nothing until the query is at least 2 characters.
  */
-export function TcgCardSuggestions({ query, onSelect }: TcgCardSuggestionsProps) {
+export function TcgCardSuggestions({ query, onSelect, maxHeight = 360 }: TcgCardSuggestionsProps) {
   const theme = useTheme();
-  const { data: suggestions = [], isFetching } = useTcgCardSearch(query);
+  const [game, setGame] = useState<TcgGame>('pokemon');
+
+  const { cards, total, isFetching, isFetchingNextPage, hasNextPage, fetchNextPage } =
+    useTcgCardSearch(query, game);
 
   if (query.trim().length < 2) return null;
-  if (!isFetching && suggestions.length === 0) return null;
 
   return (
     <View
@@ -34,58 +44,111 @@ export function TcgCardSuggestions({ query, onSelect }: TcgCardSuggestionsProps)
         overflow: 'hidden',
       }}
     >
-      {isFetching && suggestions.length === 0 && (
+      {/* EN / JP toggle */}
+      <View
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          paddingHorizontal: 12,
+          paddingVertical: 8,
+          borderBottomWidth: 1,
+          borderBottomColor: theme.colors.borderSubtle,
+          gap: 8,
+        }}
+      >
+        <ChipGroup
+          clearable={false}
+          value={game}
+          onChange={(next) => next && setGame(next)}
+          options={GAME_OPTIONS}
+        />
+        {total > 0 && (
+          <Text variant="caption" tone="tertiary">
+            {cards.length} of {total}
+          </Text>
+        )}
+      </View>
+
+      {isFetching && cards.length === 0 ? (
         <View style={{ padding: 16, alignItems: 'center' }}>
           <ActivityIndicator color={theme.colors.textTertiary} />
         </View>
-      )}
+      ) : cards.length === 0 ? (
+        <View style={{ padding: 16, alignItems: 'center' }}>
+          <Text variant="caption" tone="tertiary">
+            no matches in {game === 'pokemon' ? 'English' : 'Japanese'} sets
+          </Text>
+        </View>
+      ) : (
+        <ScrollView style={{ maxHeight }} nestedScrollEnabled keyboardShouldPersistTaps="handled">
+          {cards.map((card, index) => (
+            <Pressable
+              key={card.id}
+              onPress={() => onSelect(card)}
+              style={({ pressed }) => ({
+                flexDirection: 'row',
+                alignItems: 'center',
+                paddingHorizontal: 12,
+                paddingVertical: 10,
+                gap: 12,
+                backgroundColor: pressed ? theme.colors.bgElevated2 : 'transparent',
+                borderTopWidth: index === 0 ? 0 : 1,
+                borderTopColor: theme.colors.borderSubtle,
+              })}
+            >
+              {card.images?.small ? (
+                <Image
+                  source={{ uri: card.images.small }}
+                  style={{
+                    width: 44,
+                    height: 60,
+                    borderRadius: 4,
+                    backgroundColor: theme.colors.bgElevated2,
+                  }}
+                  resizeMode="cover"
+                />
+              ) : (
+                <View
+                  style={{
+                    width: 44,
+                    height: 60,
+                    borderRadius: 4,
+                    backgroundColor: theme.colors.bgElevated2,
+                  }}
+                />
+              )}
+              <View style={{ flex: 1, gap: 2 }}>
+                <Text variant="body" numberOfLines={1}>
+                  {card.name}
+                </Text>
+                <Text variant="caption" tone="tertiary" numberOfLines={1}>
+                  {card.set.name} · #{card.number}
+                </Text>
+                {card.variant && (
+                  <Text variant="caption" tone="secondary" numberOfLines={1}>
+                    {card.variant}
+                  </Text>
+                )}
+              </View>
+            </Pressable>
+          ))}
 
-      {suggestions.map((card, index) => (
-        <Pressable
-          key={card.id}
-          onPress={() => onSelect(card)}
-          style={({ pressed }) => ({
-            flexDirection: 'row',
-            alignItems: 'center',
-            paddingHorizontal: 12,
-            paddingVertical: 10,
-            gap: 12,
-            backgroundColor: pressed ? theme.colors.bgElevated2 : 'transparent',
-            borderTopWidth: index === 0 ? 0 : 1,
-            borderTopColor: theme.colors.borderSubtle,
-          })}
-        >
-          {card.images?.small ? (
-            <Image
-              source={{ uri: card.images.small }}
-              style={{
-                width: 44,
-                height: 60,
-                borderRadius: 4,
-                backgroundColor: theme.colors.bgElevated2,
-              }}
-              resizeMode="cover"
-            />
-          ) : (
-            <View
-              style={{
-                width: 44,
-                height: 60,
-                borderRadius: 4,
-                backgroundColor: theme.colors.bgElevated2,
-              }}
-            />
+          {hasNextPage && (
+            <View style={{ padding: 12 }}>
+              <Button
+                variant="ghost"
+                size="sm"
+                loading={isFetchingNextPage}
+                disabled={isFetchingNextPage}
+                onPress={() => fetchNextPage()}
+              >
+                {isFetchingNextPage ? 'Loading…' : 'Load more'}
+              </Button>
+            </View>
           )}
-          <View style={{ flex: 1, gap: 2 }}>
-            <Text variant="body" numberOfLines={1}>
-              {card.name}
-            </Text>
-            <Text variant="caption" tone="tertiary" numberOfLines={1}>
-              {card.set.id} · #{card.number}
-            </Text>
-          </View>
-        </Pressable>
-      ))}
+        </ScrollView>
+      )}
     </View>
   );
 }
