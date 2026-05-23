@@ -24,12 +24,13 @@ import {
   ScrollView,
   View,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const PHOTO_LIMIT = 6;
 
 export default function NewCardScreen() {
   const theme = useTheme();
+  const insets = useSafeAreaInsets();
   const { id: binderId } = useLocalSearchParams<{ id: string }>();
   const createCard = useCreateCard();
   const [photos, setPhotos] = useState<string[]>([]);
@@ -195,7 +196,7 @@ export default function NewCardScreen() {
           </View>
 
           <ScrollView
-            contentContainerStyle={{ padding: 24, gap: 24 }}
+            contentContainerStyle={{ padding: 24, gap: 24, paddingBottom: 24 + insets.bottom }}
             keyboardShouldPersistTaps="handled"
           >
             {/* Photos */}

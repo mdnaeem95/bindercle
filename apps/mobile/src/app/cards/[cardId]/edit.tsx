@@ -24,10 +24,11 @@ import {
   ScrollView,
   View,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function EditCardScreen() {
   const theme = useTheme();
+  const insets = useSafeAreaInsets();
   const { cardId } = useLocalSearchParams<{ cardId: string }>();
   const { data: card, isLoading } = useCard(cardId);
   const updateCard = useUpdateCard();
@@ -182,7 +183,7 @@ export default function EditCardScreen() {
           </View>
 
           <ScrollView
-            contentContainerStyle={{ padding: 24, gap: 24 }}
+            contentContainerStyle={{ padding: 24, gap: 24, paddingBottom: 24 + insets.bottom }}
             keyboardShouldPersistTaps="handled"
           >
             <View style={{ gap: 8 }}>

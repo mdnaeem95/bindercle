@@ -10,10 +10,11 @@ import Animated, {
   useAnimatedStyle,
   useSharedValue,
 } from 'react-native-reanimated';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function BinderDetailScreen() {
   const theme = useTheme();
+  const insets = useSafeAreaInsets();
   const { id } = useLocalSearchParams<{ id: string }>();
   const { data: binder, isLoading } = useBinder(id);
   const { data: cards } = useCardsForBinder(id);
@@ -48,7 +49,7 @@ export default function BinderDetailScreen() {
   return (
     <Surface level={0} style={{ flex: 1 }}>
       <Animated.ScrollView
-        contentContainerStyle={{ paddingBottom: 48 }}
+        contentContainerStyle={{ paddingBottom: 48 + insets.bottom }}
         onScroll={scrollHandler}
         scrollEventThrottle={16}
       >

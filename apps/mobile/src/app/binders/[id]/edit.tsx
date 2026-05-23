@@ -34,10 +34,11 @@ import {
   Switch,
   View,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function EditBinderScreen() {
   const theme = useTheme();
+  const insets = useSafeAreaInsets();
   const { id } = useLocalSearchParams<{ id: string }>();
   const userId = useAuthStore((s) => s.user?.id);
   const { data: binder, isLoading } = useBinder(id);
@@ -185,7 +186,7 @@ export default function EditBinderScreen() {
           </View>
 
           <ScrollView
-            contentContainerStyle={{ padding: 24, gap: 24 }}
+            contentContainerStyle={{ padding: 24, gap: 24, paddingBottom: 24 + insets.bottom }}
             keyboardShouldPersistTaps="handled"
           >
             <View style={{ gap: 8 }}>

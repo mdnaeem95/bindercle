@@ -4,10 +4,11 @@ import { useAuthStore } from '@/stores/auth';
 import { type AccentColor, Avatar, BinderCard, Button, Surface, Text, useTheme } from '@foilio/ui';
 import { Redirect, router } from 'expo-router';
 import { ActivityIndicator, FlatList, Pressable, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function HomeScreen() {
   const theme = useTheme();
+  const insets = useSafeAreaInsets();
   const status = useAuthStore((s) => s.status);
   const { data: profile } = useProfile();
   const { data: binders, isLoading } = useBinders();
@@ -83,7 +84,7 @@ export default function HomeScreen() {
             keyExtractor={(item) => item.id}
             numColumns={2}
             columnWrapperStyle={{ gap: 12 }}
-            contentContainerStyle={{ padding: 16, gap: 12, paddingBottom: 40 }}
+            contentContainerStyle={{ padding: 16, gap: 12, paddingBottom: 40 + insets.bottom }}
             renderItem={({ item }) => (
               <View style={{ flex: 1 }}>
                 <BinderCard

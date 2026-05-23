@@ -5,10 +5,11 @@ import { CARD_CONDITION_LABELS, type CardCondition } from '@/lib/validators/card
 import { Surface, Text, useTheme } from '@foilio/ui';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Image, Pressable, ScrollView, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function CardDetailScreen() {
   const theme = useTheme();
+  const insets = useSafeAreaInsets();
   const { cardId } = useLocalSearchParams<{ cardId: string }>();
   const { data: card, isLoading } = useCard(cardId);
 
@@ -28,7 +29,7 @@ export default function CardDetailScreen() {
 
   return (
     <Surface level={0} style={{ flex: 1 }}>
-      <ScrollView contentContainerStyle={{ paddingBottom: 48 }}>
+      <ScrollView contentContainerStyle={{ paddingBottom: 48 + insets.bottom }}>
         {/* Hero photo — shimmer overlay on holo rarities */}
         {heroPhotoUrl ? (
           cardIsHolo ? (

@@ -11,10 +11,11 @@ import { router } from 'expo-router';
 import { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { Alert, KeyboardAvoidingView, Platform, Pressable, ScrollView, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function EditProfileScreen() {
   const theme = useTheme();
+  const insets = useSafeAreaInsets();
   const userId = useAuthStore((s) => s.user?.id);
   const { data: profile, isLoading } = useProfile();
   const updateProfile = useUpdateProfile();
@@ -137,7 +138,7 @@ export default function EditProfileScreen() {
           </View>
 
           <ScrollView
-            contentContainerStyle={{ padding: 24, gap: 24 }}
+            contentContainerStyle={{ padding: 24, gap: 24, paddingBottom: 24 + insets.bottom }}
             keyboardShouldPersistTaps="handled"
           >
             {/* Avatar */}
