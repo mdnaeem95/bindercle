@@ -170,7 +170,7 @@ export default function EditCardScreen() {
                 Cancel
               </Text>
             </Pressable>
-            <Text variant="heading3">edit card</Text>
+            <Text variant="heading3">Edit Card</Text>
             <Button
               variant="ghost"
               size="sm"

@@ -32,7 +32,7 @@ export function BinderTemplatePicker({ onPick, onSkip }: BinderTemplatePickerPro
           }}
         >
           <View style={{ gap: 8 }}>
-            <Text variant="display2">start with a vibe ✨</Text>
+            <Text variant="display2">Start With a Vibe ✨</Text>
             <Text variant="body" tone="secondary">
               Pick a theme to scaffold a binder — or start blank and make it yours.
             </Text>

@@ -183,7 +183,7 @@ export default function NewCardScreen() {
                 Cancel
               </Text>
             </Pressable>
-            <Text variant="heading3">add a card</Text>
+            <Text variant="heading3">Add a Card</Text>
             <Button
               variant="ghost"
               size="sm"

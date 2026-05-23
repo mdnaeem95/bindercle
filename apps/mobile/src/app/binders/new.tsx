@@ -135,7 +135,7 @@ export default function NewBinderScreen() {
                 Cancel
               </Text>
             </Pressable>
-            <Text variant="heading3">new binder</Text>
+            <Text variant="heading3">New Binder</Text>
             <Button
               variant="ghost"
               size="sm"

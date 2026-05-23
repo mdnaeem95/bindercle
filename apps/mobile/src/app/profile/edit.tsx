@@ -125,7 +125,7 @@ export default function EditProfileScreen() {
                 Cancel
               </Text>
             </Pressable>
-            <Text variant="heading3">edit profile</Text>
+            <Text variant="heading3">Edit Profile</Text>
             <Button
               variant="ghost"
               size="sm"

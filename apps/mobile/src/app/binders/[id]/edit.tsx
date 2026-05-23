@@ -173,7 +173,7 @@ export default function EditBinderScreen() {
                 Cancel
               </Text>
             </Pressable>
-            <Text variant="heading3">edit binder</Text>
+            <Text variant="heading3">Edit Binder</Text>
             <Button
               variant="ghost"
               size="sm"

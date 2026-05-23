@@ -1,6 +1,4 @@
-import { HoloShimmer } from '@/components/HoloShimmer';
 import { useCard } from '@/hooks/useCards';
-import { isHolo } from '@/lib/cards';
 import { CARD_CONDITION_LABELS, type CardCondition } from '@/lib/validators/card';
 import { Surface, Text, useTheme } from '@foilio/ui';
 import { router, useLocalSearchParams } from 'expo-router';
@@ -25,33 +23,26 @@ export default function CardDetailScreen() {
 
   const heroPhotoUrl = card.photos[0]?.url ?? card.tcg_card?.image_large ?? null;
   const hasUserPhotos = card.photos.length > 0;
-  const cardIsHolo = isHolo(card.rarity);
 
   return (
     <Surface level={0} style={{ flex: 1 }}>
-      <ScrollView contentContainerStyle={{ paddingBottom: 48 + insets.bottom }}>
-        {/* Hero photo — shimmer overlay on holo rarities */}
+      <ScrollView
+        contentContainerStyle={{
+          paddingTop: insets.top,
+          paddingBottom: 48 + insets.bottom,
+        }}
+      >
+        {/* Hero photo */}
         {heroPhotoUrl ? (
-          cardIsHolo ? (
-            <HoloShimmer
-              uri={heroPhotoUrl}
-              style={{
-                width: '100%',
-                aspectRatio: 63 / 88,
-                backgroundColor: theme.colors.bgElevated1,
-              }}
-            />
-          ) : (
-            <Image
-              source={{ uri: heroPhotoUrl }}
-              style={{
-                width: '100%',
-                aspectRatio: 63 / 88,
-                backgroundColor: theme.colors.bgElevated1,
-              }}
-              resizeMode="cover"
-            />
-          )
+          <Image
+            source={{ uri: heroPhotoUrl }}
+            style={{
+              width: '100%',
+              aspectRatio: 63 / 88,
+              backgroundColor: theme.colors.bgElevated1,
+            }}
+            resizeMode="cover"
+          />
         ) : (
           <View
             style={{

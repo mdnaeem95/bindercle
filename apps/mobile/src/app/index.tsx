@@ -52,7 +52,7 @@ export default function HomeScreen() {
               size={36}
             />
           </Pressable>
-          <Text variant="heading2">my binders</Text>
+          <Text variant="heading2">My Binders</Text>
           <Pressable
             onPress={() => router.push('/binders/new')}
             hitSlop={12}

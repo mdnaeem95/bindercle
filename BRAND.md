@@ -50,7 +50,7 @@ The job of the visual identity is to make user content look gorgeous against it.
 
 - **Warm, not corporate.** Talk like a friend who's also a collector. Use contractions. Use the joke if it lands.
 - **Insider-friendly.** Use collector lingo (pulls, hits, slabs, sleeves) without irony — but also without gatekeeping. Adjacent fans should still feel welcome.
-- **Lowercase by default for headings and labels.** Sentence case in body. ALL-CAPS only for badges. Lowercase is a vibe — Pinterest does it, Are.na does it, it reads as soft.
+- **Title Case for screen headers and navigation.** Sentence case in body copy and microcopy. ALL-CAPS only for short badges. Title Case keeps the chrome legible and on-brand for a polished app; the warmth lives in the body, not the headers.
 - **Specific, not generic.** "dabbing Pokemon master set" beats "your trading card collection." Show, don't lecture.
 - **Short.** Cut "actually", "just", "simply", "amazing", "incredible." A few well-chosen words > a polished sentence.
 - **Emoji sparingly, intentionally.** ✨ 🌱 💫 📸 🥺 — yes, when they earn it. Never a wall of them.
