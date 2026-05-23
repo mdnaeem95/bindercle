@@ -1,5 +1,6 @@
 import { useBinder } from '@/hooks/useBinder';
-import { Button, Surface, Text, useTheme } from '@foilio/ui';
+import { useCardsForBinder } from '@/hooks/useCards';
+import { Button, CardThumbnail, Surface, Text, useTheme } from '@foilio/ui';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Image, Pressable, ScrollView, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -8,6 +9,7 @@ export default function BinderDetailScreen() {
   const theme = useTheme();
   const { id } = useLocalSearchParams<{ id: string }>();
   const { data: binder, isLoading } = useBinder(id);
+  const { data: cards } = useCardsForBinder(id);
 
   if (isLoading || !binder) {
     return (
@@ -18,6 +20,8 @@ export default function BinderDetailScreen() {
       </Surface>
     );
   }
+
+  const cardCount = cards?.length ?? 0;
 
   return (
     <Surface level={0} style={{ flex: 1 }}>
@@ -90,11 +94,16 @@ export default function BinderDetailScreen() {
         <View style={{ padding: 24, gap: 16 }}>
           <View style={{ gap: 8 }}>
             <Text variant="heading1">{binder.title}</Text>
-            {!binder.is_public && (
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
               <Text variant="caption" tone="tertiary">
-                Private
+                {cardCount} {cardCount === 1 ? 'card' : 'cards'}
               </Text>
-            )}
+              {!binder.is_public && (
+                <Text variant="caption" tone="tertiary">
+                  · Private
+                </Text>
+              )}
+            </View>
           </View>
 
           {binder.description && (
@@ -123,28 +132,59 @@ export default function BinderDetailScreen() {
             </View>
           )}
 
-          {/* Cards placeholder — Week 5 lands the upload flow */}
-          <View
-            style={{
-              marginTop: 32,
-              padding: 32,
-              alignItems: 'center',
-              gap: 12,
-              borderRadius: 16,
-              borderWidth: 1,
-              borderStyle: 'dashed',
-              borderColor: theme.colors.borderSubtle,
-            }}
-          >
-            <Text variant="body" tone="secondary" align="center">
-              No cards yet
-            </Text>
-            <Text variant="caption" tone="tertiary" align="center">
-              Card uploads land in Phase 1 Week 5
-            </Text>
-            <Button variant="ghost" size="sm" disabled>
-              Add a card
-            </Button>
+          {/* Cards grid */}
+          <View style={{ marginTop: 16, gap: 12 }}>
+            <View
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+              }}
+            >
+              <Text variant="heading3">Cards</Text>
+              <Button
+                variant="secondary"
+                size="sm"
+                onPress={() => router.push(`/binders/${binder.id}/cards/new`)}
+              >
+                Add card
+              </Button>
+            </View>
+
+            {cardCount === 0 ? (
+              <View
+                style={{
+                  marginTop: 8,
+                  padding: 32,
+                  alignItems: 'center',
+                  gap: 12,
+                  borderRadius: 16,
+                  borderWidth: 1,
+                  borderStyle: 'dashed',
+                  borderColor: theme.colors.borderSubtle,
+                }}
+              >
+                <Text variant="body" tone="secondary" align="center">
+                  No cards yet
+                </Text>
+                <Text variant="caption" tone="tertiary" align="center">
+                  Tap “Add card” to upload your first.
+                </Text>
+              </View>
+            ) : (
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+                {(cards ?? []).map((card) => (
+                  <View key={card.id} style={{ width: '31.5%' }}>
+                    <CardThumbnail
+                      name={card.name}
+                      photoUrl={card.photos[0]?.url ?? null}
+                      photoCount={card.photos.length}
+                      onPress={() => router.push(`/cards/${card.id}`)}
+                    />
+                  </View>
+                ))}
+              </View>
+            )}
           </View>
         </View>
       </ScrollView>

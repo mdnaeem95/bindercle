@@ -46,7 +46,14 @@
         }
       ],
       "expo-secure-store",
-      "@sentry/react-native"
+      "@sentry/react-native",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Foilio needs access to your photos so you can add card images to your binders.",
+          "cameraPermission": "Foilio uses your camera to capture card photos."
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,

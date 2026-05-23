@@ -6,3 +6,5 @@ export { Button } from './Button';
 export { Input } from './Input';
 export { Avatar } from './Avatar';
 export { BinderCard } from './BinderCard';
+export { CardThumbnail } from './CardThumbnail';
+export { ChipGroup } from './ChipGroup';

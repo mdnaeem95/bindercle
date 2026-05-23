@@ -89,3 +89,61 @@ export async function uploadBinderCover(
     1200,
   );
 }
+
+/**
+ * Upload a card photo. Path convention: `{userId}/{cardId}/photo-{order}-{timestamp}.jpg`.
+ * `order` lets us keep filenames distinct when uploading multiple photos for one card.
+ */
+export async function uploadCardPhoto(
+  userId: string,
+  cardId: string,
+  order: number,
+  localUri: string,
+): Promise<string> {
+  return uploadToBucket(
+    'card-photos',
+    `${userId}/${cardId}/photo-${order}-${Date.now()}.jpg`,
+    localUri,
+    1600,
+  );
+}
+
+/**
+ * Pick multiple images from the library, up to `limit` (default 6).
+ */
+export async function pickImages(limit = 6): Promise<{ uri: string }[]> {
+  const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+  if (!permission.granted) {
+    throw new Error('Photo library permission required.');
+  }
+
+  const result = await ImagePicker.launchImageLibraryAsync({
+    mediaTypes: ['images'],
+    allowsMultipleSelection: true,
+    selectionLimit: limit,
+    quality: 0.9,
+  });
+
+  if (result.canceled) return [];
+  return result.assets.map((a) => ({ uri: a.uri }));
+}
+
+/**
+ * Take a single photo with the device camera.
+ */
+export async function takePhoto(): Promise<{ uri: string } | null> {
+  const permission = await ImagePicker.requestCameraPermissionsAsync();
+  if (!permission.granted) {
+    throw new Error('Camera permission required.');
+  }
+
+  const result = await ImagePicker.launchCameraAsync({
+    mediaTypes: ['images'],
+    allowsEditing: false,
+    quality: 0.9,
+  });
+
+  if (result.canceled) return null;
+  const asset = result.assets[0];
+  return asset ? { uri: asset.uri } : null;
+}
