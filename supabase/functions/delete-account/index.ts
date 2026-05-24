@@ -40,8 +40,9 @@ serve(async (req) => {
   }
 
   const supabaseUrl = Deno.env.get('SUPABASE_URL');
+  const anonKey = Deno.env.get('SUPABASE_ANON_KEY');
   const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
-  if (!supabaseUrl || !serviceKey) {
+  if (!supabaseUrl || !anonKey || !serviceKey) {
     return json({ error: 'Edge function not configured (missing env)' }, 500);
   }
 
@@ -51,11 +52,13 @@ serve(async (req) => {
   if (!authHeader?.startsWith('Bearer ')) {
     return json({ error: 'Missing bearer token' }, 401);
   }
-  const jwt = authHeader.slice(7);
 
-  // Resolve the caller's user id from the JWT via the auth-context client.
-  const callerClient = createClient(supabaseUrl, jwt, {
-    global: { headers: { Authorization: `Bearer ${jwt}` } },
+  // Resolve the caller's user id from the JWT. The supabase-js client wants the
+  // project's ANON key as its api key — the user JWT goes through the
+  // Authorization header (passed via `global.headers`), and `auth.getUser()`
+  // then validates that header.
+  const callerClient = createClient(supabaseUrl, anonKey, {
+    global: { headers: { Authorization: authHeader } },
     auth: { autoRefreshToken: false, persistSession: false },
   });
   const {

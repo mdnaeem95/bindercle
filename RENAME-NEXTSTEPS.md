@@ -12,10 +12,10 @@ these in order before the next build.
 The bundle ID went from `app.foilio.mobile` to `app.bindercle.mobile`.
 Apple treats this as a different app entirely.
 
-- [ ] Sign in to <https://developer.apple.com/account>
-- [ ] **Identifiers → +** → App IDs → App → Bundle ID `app.bindercle.mobile`
+- [Y] Sign in to <https://developer.apple.com/account>
+- [Y] **Identifiers → +** → App IDs → App → Bundle ID `app.bindercle.mobile`
       → enable **Sign In with Apple** capability
-- [ ] (Optional but recommended) leave the old `app.foilio.mobile`
+- [Y] (Optional but recommended) leave the old `app.foilio.mobile`
       registration alone — Apple charges nothing for unused identifiers
       and removing it doesn't help anything
 
@@ -26,11 +26,11 @@ Apple treats this as a different app entirely.
 The Apple OAuth provider in Supabase is tied to the iOS bundle ID. It
 needs the new value before Apple Sign In will work end-to-end.
 
-- [ ] Supabase dashboard → Authentication → Providers → Apple → edit
-- [ ] **Audience / Client IDs** — add `app.bindercle.mobile` (you can keep
+- [Y] Supabase dashboard → Authentication → Providers → Apple → edit
+- [Y] **Audience / Client IDs** — add `app.bindercle.mobile` (you can keep
       the old `app.foilio.mobile` listed if you want — Supabase accepts
       multiple, but cleaner to remove the old one after testing)
-- [ ] Save
+- [Y] Save
 
 ---
 
@@ -39,10 +39,10 @@ needs the new value before Apple Sign In will work end-to-end.
 The Google OAuth client redirects to the app via a custom URL scheme
 (`foilio://auth-callback`). The scheme changed to `bindercle://`.
 
-- [ ] Google Cloud Console → APIs & Services → Credentials → your OAuth
+- [Y] Google Cloud Console → APIs & Services → Credentials → your OAuth
       2.0 Client ID for iOS
-- [ ] **Authorized redirect URIs** — add `bindercle://auth-callback`
-- [ ] You can leave the old `foilio://auth-callback` for now in case any
+- [Y] **Authorized redirect URIs** — add `bindercle://auth-callback`
+- [Y] You can leave the old `foilio://auth-callback` for now in case any
       dev clients with the old bundle ID are still running; remove once
       everyone's on the new build
 
