@@ -1,11 +1,14 @@
+import { ReportSheet } from '@/components/ReportSheet';
 import { type BinderWithCount, useBinders } from '@/hooks/useBinders';
+import { useIsBlocked, useToggleBlock } from '@/hooks/useBlockUser';
 import { type PublicBinder, usePublicBindersByUser, useUserProfile } from '@/hooks/useUserProfile';
 import { useToggleFollow, useUserSocialStats } from '@/hooks/useUserSocialStats';
 import { useAuthStore } from '@/stores/auth';
 import { type AccentColor, Avatar, BinderCard, Button, Surface, Text, useTheme } from '@foilio/ui';
 import { router } from 'expo-router';
-import { ArrowLeft, Link as LinkIcon } from 'lucide-react-native';
-import { ActivityIndicator, FlatList, Linking, Pressable, View } from 'react-native';
+import { ArrowLeft, Link as LinkIcon, MoreHorizontal, Settings } from 'lucide-react-native';
+import { useState } from 'react';
+import { ActivityIndicator, Alert, FlatList, Linking, Pressable, View } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 type ProfileBinder = (BinderWithCount | PublicBinder) & { is_public: boolean };
@@ -31,6 +34,9 @@ export function UserProfileView({ userId, hideBackButton }: UserProfileViewProps
   const { data: profile, isLoading: profileLoading } = useUserProfile(userId);
   const { data: stats } = useUserSocialStats(userId);
   const toggleFollow = useToggleFollow();
+  const { data: isBlocked } = useIsBlocked(userId);
+  const toggleBlock = useToggleBlock();
+  const [reportOpen, setReportOpen] = useState(false);
   const isSelf = !!profile && !!selfId && profile.id === selfId;
 
   const { data: ownBinders, isLoading: ownLoading } = useBinders();
@@ -72,7 +78,13 @@ export function UserProfileView({ userId, hideBackButton }: UserProfileViewProps
             </Pressable>
           )}
           <Text variant="heading3">@{profile.handle}</Text>
-          <View style={{ width: 20 }} />
+          {isSelf ? (
+            <Pressable onPress={() => router.push('/settings')} hitSlop={12}>
+              <Settings size={20} color={theme.colors.textPrimary} strokeWidth={1.8} />
+            </Pressable>
+          ) : (
+            <View style={{ width: 20 }} />
+          )}
         </View>
 
         <FlatList
@@ -135,19 +147,63 @@ export function UserProfileView({ userId, hideBackButton }: UserProfileViewProps
                 </Button>
               ) : (
                 !!selfId && (
-                  <Button
-                    variant={stats?.isFollowing ? 'ghost' : 'primary'}
-                    size="sm"
-                    loading={toggleFollow.isPending}
-                    onPress={() =>
-                      toggleFollow.mutate({
-                        user_id: profile.id,
-                        currentlyFollowing: !!stats?.isFollowing,
-                      })
-                    }
-                  >
-                    {stats?.isFollowing ? 'Following' : 'Follow'}
-                  </Button>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                    <Button
+                      variant={stats?.isFollowing || isBlocked ? 'ghost' : 'primary'}
+                      size="sm"
+                      loading={toggleFollow.isPending}
+                      disabled={isBlocked}
+                      onPress={() =>
+                        toggleFollow.mutate({
+                          user_id: profile.id,
+                          currentlyFollowing: !!stats?.isFollowing,
+                        })
+                      }
+                    >
+                      {isBlocked ? 'Blocked' : stats?.isFollowing ? 'Following' : 'Follow'}
+                    </Button>
+                    <Pressable
+                      onPress={() => {
+                        Alert.alert(
+                          profile.display_name?.trim() || `@${profile.handle}`,
+                          undefined,
+                          [
+                            {
+                              text: isBlocked ? 'Unblock' : 'Block',
+                              style: 'destructive',
+                              onPress: () =>
+                                toggleBlock.mutate({
+                                  target_user_id: profile.id,
+                                  currentlyBlocked: !!isBlocked,
+                                }),
+                            },
+                            {
+                              text: 'Report',
+                              style: 'destructive',
+                              onPress: () => setReportOpen(true),
+                            },
+                            { text: 'Cancel', style: 'cancel' },
+                          ],
+                        );
+                      }}
+                      hitSlop={8}
+                      style={{
+                        width: 32,
+                        height: 32,
+                        borderRadius: 16,
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        backgroundColor: theme.colors.bgElevated1,
+                      }}
+                      accessibilityLabel="More actions"
+                    >
+                      <MoreHorizontal
+                        size={16}
+                        color={theme.colors.textSecondary}
+                        strokeWidth={2}
+                      />
+                    </Pressable>
+                  </View>
                 )
               )}
 
@@ -201,6 +257,15 @@ export function UserProfileView({ userId, hideBackButton }: UserProfileViewProps
           )}
         />
       </SafeAreaView>
+
+      {/* Report sheet — opened from the More-actions menu on others' profiles. */}
+      <ReportSheet
+        visible={reportOpen}
+        onClose={() => setReportOpen(false)}
+        targetType="user"
+        targetId={profile.id}
+        targetLabel={`@${profile.handle}`}
+      />
     </Surface>
   );
 }

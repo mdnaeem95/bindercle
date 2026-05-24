@@ -1,3 +1,4 @@
+import { useBlockedUserIdSet } from '@/hooks/useBlockUser';
 import {
   type NotificationWithRefs,
   useMarkAllNotificationsRead,
@@ -13,7 +14,9 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 export default function NotificationsScreen() {
   const theme = useTheme();
   const insets = useSafeAreaInsets();
-  const { data: notifications, isLoading } = useNotifications();
+  const { data: rawNotifications, isLoading } = useNotifications();
+  const blockedIds = useBlockedUserIdSet();
+  const notifications = rawNotifications?.filter((n) => !blockedIds.has(n.actor.id));
   const markAllRead = useMarkAllNotificationsRead();
 
   // Mark everything as read on visit. Async + idempotent — safe to fire once.

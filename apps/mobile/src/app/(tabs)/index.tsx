@@ -1,4 +1,5 @@
 import { useBinders } from '@/hooks/useBinders';
+import { useBlockedUserIdSet } from '@/hooks/useBlockUser';
 import { type DiscoverBinder, useDiscoverBinders } from '@/hooks/useDiscoverBinders';
 import { useProfile } from '@/hooks/useProfile';
 import { type SavedBinder, useSavedBinders } from '@/hooks/useSavedBinders';
@@ -152,8 +153,16 @@ function MineFeed({ insetsBottom }: { insetsBottom: number }) {
 
 function DiscoverFeed({ insetsBottom }: { insetsBottom: number }) {
   const theme = useTheme();
-  const { binders, isLoading, hasNextPage, isFetchingNextPage, fetchNextPage, refetch } =
-    useDiscoverBinders();
+  const {
+    binders: allBinders,
+    isLoading,
+    hasNextPage,
+    isFetchingNextPage,
+    fetchNextPage,
+    refetch,
+  } = useDiscoverBinders();
+  const blockedIds = useBlockedUserIdSet();
+  const binders = allBinders.filter((b) => !blockedIds.has(b.owner.id));
   const [refreshing, setRefreshing] = useState(false);
   const onRefresh = async () => {
     setRefreshing(true);

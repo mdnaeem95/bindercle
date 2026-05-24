@@ -1,4 +1,5 @@
 import { DraggableGrid } from '@/components/DraggableGrid';
+import { ReportSheet } from '@/components/ReportSheet';
 import { useBinder } from '@/hooks/useBinder';
 import { useBinderEngagement, useToggleLike, useToggleSave } from '@/hooks/useBinderEngagement';
 import { useCardsForBinder } from '@/hooks/useCards';
@@ -23,6 +24,7 @@ import {
   ChevronRight,
   Heart,
   MessageCircle,
+  MoreHorizontal,
 } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
 import { Alert, Image, type LayoutChangeEvent, Pressable, View } from 'react-native';
@@ -52,6 +54,7 @@ export default function BinderDetailScreen() {
   const [reorganizing, setReorganizing] = useState(false);
   const [draftPages, setDraftPages] = useState<PageWithCount[]>([]);
   const [gridWidth, setGridWidth] = useState(0);
+  const [reportOpen, setReportOpen] = useState(false);
 
   useEffect(() => {
     setDraftPages(pages ?? []);
@@ -280,6 +283,21 @@ export default function BinderDetailScreen() {
                       strokeWidth={2}
                     />
                   </Pressable>
+                  <Pressable
+                    onPress={() => setReportOpen(true)}
+                    hitSlop={12}
+                    style={{
+                      backgroundColor: 'rgba(10,10,15,0.6)',
+                      width: 36,
+                      height: 36,
+                      borderRadius: 18,
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                    accessibilityLabel="Report binder"
+                  >
+                    <MoreHorizontal size={18} color="#F8F8F2" strokeWidth={2} />
+                  </Pressable>
                 </View>
               )}
             </View>
@@ -480,6 +498,14 @@ export default function BinderDetailScreen() {
           </View>
         </Animated.ScrollView>
       </GestureHandlerRootView>
+
+      <ReportSheet
+        visible={reportOpen}
+        onClose={() => setReportOpen(false)}
+        targetType="binder"
+        targetId={binder.id}
+        targetLabel={binder.title}
+      />
     </Surface>
   );
 }

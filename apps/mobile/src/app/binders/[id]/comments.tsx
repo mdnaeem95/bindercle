@@ -1,3 +1,5 @@
+import { ReportSheet } from '@/components/ReportSheet';
+import { useBlockedUserIdSet } from '@/hooks/useBlockUser';
 import {
   type CommentWithAuthor,
   useAddComment,
@@ -7,7 +9,7 @@ import {
 import { useAuthStore } from '@/stores/auth';
 import { Avatar, Surface, Text, useTheme } from '@foilio/ui';
 import { router, useLocalSearchParams } from 'expo-router';
-import { ArrowLeft, MessageCircle, Send, Trash2 } from 'lucide-react-native';
+import { ArrowLeft, Flag, MessageCircle, Send, Trash2 } from 'lucide-react-native';
 import { useState } from 'react';
 import {
   ActivityIndicator,
@@ -26,7 +28,9 @@ export default function BinderCommentsScreen() {
   const insets = useSafeAreaInsets();
   const { id } = useLocalSearchParams<{ id: string }>();
   const viewerId = useAuthStore((s) => s.user?.id);
-  const { data: comments, isLoading } = useComments(id);
+  const { data: rawComments, isLoading } = useComments(id);
+  const blockedIds = useBlockedUserIdSet();
+  const comments = rawComments?.filter((c) => !blockedIds.has(c.user_id));
   const addComment = useAddComment();
   const deleteComment = useDeleteComment();
   const [draft, setDraft] = useState('');
@@ -206,6 +210,7 @@ function CommentRow({
   onDelete: () => void;
 }) {
   const theme = useTheme();
+  const [reportOpen, setReportOpen] = useState(false);
   const handleLabel = comment.author.display_name?.trim() || `@${comment.author.handle}`;
   return (
     <View
@@ -231,11 +236,22 @@ function CommentRow({
         </View>
         <Text variant="body">{comment.body}</Text>
       </View>
-      {isOwn && (
+      {isOwn ? (
         <Pressable onPress={onDelete} hitSlop={6} style={{ padding: 4 }}>
           <Trash2 size={14} color={theme.colors.textTertiary} strokeWidth={1.8} />
         </Pressable>
+      ) : (
+        <Pressable onPress={() => setReportOpen(true)} hitSlop={6} style={{ padding: 4 }}>
+          <Flag size={14} color={theme.colors.textTertiary} strokeWidth={1.8} />
+        </Pressable>
       )}
+      <ReportSheet
+        visible={reportOpen}
+        onClose={() => setReportOpen(false)}
+        targetType="comment"
+        targetId={comment.id}
+        targetLabel={`Comment by ${handleLabel}`}
+      />
     </View>
   );
 }

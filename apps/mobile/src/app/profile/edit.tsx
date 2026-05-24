@@ -17,29 +17,7 @@ export default function EditProfileScreen() {
   const theme = useTheme();
   const insets = useSafeAreaInsets();
   const userId = useAuthStore((s) => s.user?.id);
-  const signOut = useAuthStore((s) => s.signOut);
   const { data: profile, isLoading } = useProfile();
-
-  const onSignOut = () => {
-    Alert.alert('Sign out?', "You'll need to sign in again to see your binders.", [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Sign out',
-        style: 'destructive',
-        onPress: async () => {
-          try {
-            await signOut();
-            // Auth-gated redirects only fire on the Home screen, so kick the user
-            // there explicitly after sign-out instead of stalling on this screen.
-            router.replace('/sign-in');
-          } catch (e) {
-            const err = e as { message?: string };
-            Alert.alert("Couldn't sign out", err.message ?? 'Try again.');
-          }
-        },
-      },
-    ]);
-  };
   const updateProfile = useUpdateProfile();
   const [avatarBusy, setAvatarBusy] = useState(false);
 
@@ -269,10 +247,6 @@ export default function EditProfileScreen() {
                 />
               )}
             />
-
-            <Button variant="destructive" size="md" onPress={onSignOut}>
-              Sign out
-            </Button>
           </ScrollView>
         </SafeAreaView>
       </KeyboardAvoidingView>
