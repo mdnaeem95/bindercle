@@ -58,7 +58,6 @@ export default function HomeScreen() {
               size={36}
             />
           </Pressable>
-          <Text variant="heading2">Foilio</Text>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
             <Pressable
               onPress={() => router.push('/search')}
