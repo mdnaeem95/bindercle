@@ -313,19 +313,22 @@ export default function BinderDetailScreen() {
             {binder.tags.length > 0 && (
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
                 {binder.tags.map((tag) => (
-                  <View
+                  <Pressable
                     key={tag.id}
-                    style={{
-                      backgroundColor: theme.colors.bgElevated2,
+                    onPress={() => router.push(`/tags/${tag.slug}`)}
+                    style={({ pressed }) => ({
+                      backgroundColor: pressed
+                        ? theme.colors.bgElevated3
+                        : theme.colors.bgElevated2,
                       borderColor: theme.colors.borderDefault,
                       borderWidth: 1,
                       borderRadius: 9999,
                       paddingHorizontal: 12,
                       paddingVertical: 6,
-                    }}
+                    })}
                   >
                     <Text variant="caption">{tag.name}</Text>
-                  </View>
+                  </Pressable>
                 ))}
               </View>
             )}

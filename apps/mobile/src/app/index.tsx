@@ -15,7 +15,7 @@ import {
   useTheme,
 } from '@foilio/ui';
 import { Redirect, router } from 'expo-router';
-import { Bell, Bookmark, Compass, Sprout } from 'lucide-react-native';
+import { Bell, Bookmark, Compass, Search as SearchIcon, Sprout } from 'lucide-react-native';
 import { useState } from 'react';
 import { ActivityIndicator, FlatList, Pressable, RefreshControl, View } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -60,6 +60,20 @@ export default function HomeScreen() {
           </Pressable>
           <Text variant="heading2">Foilio</Text>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            <Pressable
+              onPress={() => router.push('/search')}
+              hitSlop={12}
+              style={{
+                width: 36,
+                height: 36,
+                borderRadius: 18,
+                backgroundColor: theme.colors.bgElevated1,
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <SearchIcon size={18} color={theme.colors.textPrimary} strokeWidth={1.8} />
+            </Pressable>
             <Pressable
               onPress={() => router.push('/notifications')}
               hitSlop={12}
