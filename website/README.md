@@ -10,47 +10,42 @@ Static marketing + legal site for Bindercle. Four pages:
 
 No build step. Pure HTML/CSS. Fonts loaded from Google Fonts CDN.
 
-## Deploy to GitHub Pages
+## Deploy to Cloudflare Pages
 
-The fastest free path:
+1. **Cloudflare Dashboard → Workers & Pages → Create → Pages → Connect
+   to Git**. Pick `mdnaeem95/bindercle`. Authorize the GitHub app for
+   that repo only.
+2. **Build settings**: leave the build command empty.
+   **Build output directory**: `website`. **Production branch**: `main`.
+   Deploy.
+3. After the first deploy, **Custom domains → Set up a custom domain**
+   → enter `bindercle.app`. CF will tell you to either add DNS records
+   at GoDaddy or change your nameservers.
+4. **Move DNS to Cloudflare** (recommended). In Cloudflare → Add a Site
+   → `bindercle.app` → Free plan. CF scans your current GoDaddy records
+   and gives you two nameservers. Go to GoDaddy → **Domain Settings →
+   Nameservers → Change → I'll use my own** and paste them. Wait
+   ~1 hour for propagation.
+5. Once DNS is on Cloudflare, the Pages custom domain provisions
+   automatically (apex + `www` redirect). TLS issues in minutes.
 
-1. Push this repo (already on GitHub at `mdnaeem95/foilio` — rename to
-   `bindercle` first via `gh repo rename bindercle` if you haven't).
-2. In the GitHub repo settings → **Pages** → set **Source** to `Deploy
-   from a branch`, **Branch** to `main`, **Folder** to `/website`. Save.
-3. Wait ~30 sec. You'll get a URL like
-   `https://mdnaeem95.github.io/bindercle/`.
-4. (Optional) Point the `bindercle.app` domain at it:
-   - In your domain registrar, add a CNAME record pointing
-     `bindercle.app` (or `www.bindercle.app`) to `mdnaeem95.github.io`.
-   - In GitHub Pages settings, add `bindercle.app` as the custom domain
-     and enable "Enforce HTTPS."
-   - GitHub provisions a Let's Encrypt cert automatically; wait ~10 min.
+## Email — Cloudflare Email Routing
 
-## Deploy to Cloudflare Pages (alternative)
+Once DNS is on Cloudflare, you get free forwarding from any address
+on `bindercle.app` to your real inbox:
 
-If you'd rather have a real edge CDN (faster, more headroom):
+1. Cloudflare dashboard → **Email → Email Routing → Get started**.
+2. Add MX + SPF records (one click).
+3. Add custom addresses:
+   - `pika@bindercle.app → naeemsani95@gmail.com`
+   - `privacy@bindercle.app → naeemsani95@gmail.com`
+   - `security@bindercle.app → naeemsani95@gmail.com`
+   - `abuse@bindercle.app → naeemsani95@gmail.com`
+4. Verify your destination inbox via the confirmation email Cloudflare
+   sends.
 
-1. Cloudflare Dashboard → Workers & Pages → Create → connect this repo.
-2. Build command: leave empty. Output directory: `website`.
-3. Set custom domain `bindercle.app` in Pages settings.
-4. CF auto-issues TLS, edge-caches globally, no rate limit.
-
-## Before going live
-
-These docs reference your real email addresses. They're set up in the
-HTML to point at:
-
-- `pika@bindercle.app`
-- `privacy@bindercle.app`
-- `security@bindercle.app`
-- `abuse@bindercle.app`
-- `pika@bindercle.app`
-
-You'll need at least `support@` and `privacy@` working before App Store
-review (Apple checks). Easiest path: set up email forwarding from your
-domain registrar (Namecheap, Porkbun, Cloudflare all offer this free) to
-your real inbox.
+These mailboxes (especially `privacy@` and `pika@`) need to be working
+before App Store review — Apple sends test mail to the privacy contact.
 
 ## Honest disclosure
 
