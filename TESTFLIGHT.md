@@ -29,7 +29,7 @@ but external testers (or App Store release) need them.
 - [ ] **Privacy Policy URL** — host one. Replace `https://bindercle.app/privacy`
       in `apps/mobile/src/app/settings.tsx`.
 - [ ] **Terms of Service URL** — same. Replace `https://bindercle.app/terms`.
-- [ ] **Support URL / email** — `mailto:support@bindercle.app` is the current
+- [ ] **Support URL / email** — `mailto:pika@bindercle.app` is the current
       placeholder.
 - [ ] **App description** — written copy for the App Store listing.
 - [ ] **Keywords** (≤100 chars) — comma-separated.

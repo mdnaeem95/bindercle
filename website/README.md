@@ -41,11 +41,11 @@ If you'd rather have a real edge CDN (faster, more headroom):
 These docs reference your real email addresses. They're set up in the
 HTML to point at:
 
-- `support@bindercle.app`
+- `pika@bindercle.app`
 - `privacy@bindercle.app`
 - `security@bindercle.app`
 - `abuse@bindercle.app`
-- `hello@bindercle.app`
+- `pika@bindercle.app`
 
 You'll need at least `support@` and `privacy@` working before App Store
 review (Apple checks). Easiest path: set up email forwarding from your
