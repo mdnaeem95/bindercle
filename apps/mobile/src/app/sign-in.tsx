@@ -1,7 +1,7 @@
 import { isAppleAuthAvailable } from '@/lib/auth';
 import { trackEvent } from '@/lib/observability';
 import { useAuthStore } from '@/stores/auth';
-import { FoilioWordmark, Surface, Text, useTheme } from '@foilio/ui';
+import { BindercleWordmark, Surface, Text, useTheme } from '@foilio/ui';
 import * as AppleAuthentication from 'expo-apple-authentication';
 import { Redirect } from 'expo-router';
 import { useEffect, useState } from 'react';
@@ -66,7 +66,7 @@ export default function SignInScreen() {
       <SafeAreaView style={{ flex: 1, justifyContent: 'space-between', padding: 24 }}>
         {/* Hero */}
         <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', gap: 16 }}>
-          <FoilioWordmark size={64} />
+          <BindercleWordmark size={64} />
           <Text variant="display2" tone="secondary" align="center">
             show off your cute collection
           </Text>

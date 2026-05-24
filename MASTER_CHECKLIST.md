@@ -1,4 +1,4 @@
-# Foilio — Master Test Checklist
+# Bindercle — Master Test Checklist
 
 A comprehensive walk-through of every feature shipped so far. Use this as a pre-release sanity pass.
 

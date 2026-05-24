@@ -1,4 +1,4 @@
-# Foilio — TestFlight Submission Guide
+# Bindercle — TestFlight Submission Guide
 
 Step-by-step for getting the first build into TestFlight. Aimed at a solo
 dev doing this for the first time. After the initial run, subsequent
@@ -10,14 +10,14 @@ submissions are mostly `pnpm mobile eas build && eas submit`.
 
 ### Apple Developer account
 - [ ] Active Apple Developer Program membership ($99/yr).
-- [ ] Bundle ID `app.foilio.mobile` registered at
+- [ ] Bundle ID `app.bindercle.mobile` registered at
       <https://developer.apple.com/account/resources/identifiers/list>
       with **Sign In with Apple** capability enabled.
 
 ### App Store Connect record
 - [ ] Create a new app at <https://appstoreconnect.apple.com> → My Apps → "+".
-- [ ] Platform: iOS. Name: **Foilio**. Bundle ID: `app.foilio.mobile`.
-      SKU: anything (e.g. `foilio-mobile-1`). Primary language: English.
+- [ ] Platform: iOS. Name: **Bindercle**. Bundle ID: `app.bindercle.mobile`.
+      SKU: anything (e.g. `bindercle-mobile-1`). Primary language: English.
 - [ ] After creation, grab the **Apple ID** (a numeric ID, sometimes
       called "ascAppId") from App Information. Save it for later if you
       want fully non-interactive submits.
@@ -26,10 +26,10 @@ submissions are mostly `pnpm mobile eas build && eas submit`.
 You can build + submit to TestFlight **internal** testing without these,
 but external testers (or App Store release) need them.
 
-- [ ] **Privacy Policy URL** — host one. Replace `https://foilio.app/privacy`
+- [ ] **Privacy Policy URL** — host one. Replace `https://bindercle.app/privacy`
       in `apps/mobile/src/app/settings.tsx`.
-- [ ] **Terms of Service URL** — same. Replace `https://foilio.app/terms`.
-- [ ] **Support URL / email** — `mailto:support@foilio.app` is the current
+- [ ] **Terms of Service URL** — same. Replace `https://bindercle.app/terms`.
+- [ ] **Support URL / email** — `mailto:support@bindercle.app` is the current
       placeholder.
 - [ ] **App description** — written copy for the App Store listing.
 - [ ] **Keywords** (≤100 chars) — comma-separated.
@@ -158,7 +158,7 @@ flag:
 - [ ] Real TOS + Privacy URLs (currently placeholders in Settings).
 - [ ] Age rating — set to **12+** minimum (UGC + social).
 - [ ] App Privacy section in App Store Connect — declare what data you
-      collect. Foilio collects:
+      collect. Bindercle collects:
       - Email + name (Apple/Google OAuth) → used for account, not linked
         to ads
       - User content (binders, cards, comments) → linked to identity, not

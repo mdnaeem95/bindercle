@@ -1,16 +1,16 @@
 {
   "expo": {
-    "name": "Foilio",
-    "slug": "foilio",
+    "name": "Bindercle",
+    "slug": "bindercle",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "foilio",
+    "scheme": "bindercle",
     "userInterfaceStyle": "dark",
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "app.foilio.mobile",
+      "bundleIdentifier": "app.bindercle.mobile",
       "icon": "./assets/expo.icon",
       "usesAppleSignIn": true,
       "infoPlist": {
@@ -18,7 +18,7 @@
       }
     },
     "android": {
-      "package": "app.foilio.mobile",
+      "package": "app.bindercle.mobile",
       "adaptiveIcon": {
         "backgroundColor": "#0A0A0F",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
@@ -50,8 +50,8 @@
       [
         "expo-image-picker",
         {
-          "photosPermission": "Foilio needs access to your photos so you can add card images to your binders.",
-          "cameraPermission": "Foilio uses your camera to capture card photos."
+          "photosPermission": "Bindercle needs access to your photos so you can add card images to your binders.",
+          "cameraPermission": "Bindercle uses your camera to capture card photos."
         }
       ]
     ],

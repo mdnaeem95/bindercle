@@ -8,9 +8,9 @@ import { ActivityIndicator, Alert, Linking, Pressable, ScrollView, View } from '
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 // TODO: replace these with the real hosted URLs before App Store submission.
-const TOS_URL = 'https://foilio.app/terms';
-const PRIVACY_URL = 'https://foilio.app/privacy';
-const SUPPORT_URL = 'mailto:support@foilio.app';
+const TOS_URL = 'https://bindercle.app/terms';
+const PRIVACY_URL = 'https://bindercle.app/privacy';
+const SUPPORT_URL = 'mailto:support@bindercle.app';
 
 export default function SettingsScreen() {
   const theme = useTheme();

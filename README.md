@@ -1,4 +1,4 @@
-# Foilio
+# Bindercle
 
 Pokemon TCG collection showcase mobile app. Pinterest meets card collecting.
 

@@ -1,4 +1,4 @@
-# Foilio — Brand Identity v1.1
+# Bindercle — Brand Identity v1.1
 
 *Visual direction: **Holo Luxe** (locked 2026-05-22). Behavioral direction: **playful warmth** (revised 2026-05-23).*
 
@@ -13,9 +13,9 @@
 
 ## 1. Brand Essence
 
-**One-liner:** Foilio is where your cards become art.
+**One-liner:** Bindercle is where your cards become art.
 
-**Why-statement:** Collectors curate their themed sets because they love them. Foilio honors that love with a stage that treats every binder like a museum exhibit and every holo like the light source it is.
+**Why-statement:** Collectors curate their themed sets because they love them. Bindercle honors that love with a stage that treats every binder like a museum exhibit and every holo like the light source it is.
 
 **North-star feeling:** *"I want to spend time here."* The app should feel like opening a velvet-lined display case — quiet, premium, and brought to life by the cards themselves.
 
@@ -76,7 +76,7 @@ The job of the visual identity is to make user content look gorgeous against it.
 | "Congratulations! You've added another card!" | "added ✨" |
 | "Oops! Something went wrong!" | "couldn't save that. retry?" |
 | "Unleash your inner collector!" | "show your shine." |
-| "Premium members get exclusive access" | "Foilio Plus. more binders, more polish." |
+| "Premium members get exclusive access" | "Bindercle Plus. more binders, more polish." |
 | "Your collection, on display" | "show off your cute collection" |
 | "No cards yet" | "empty binder, full potential 💫" |
 
@@ -202,7 +202,7 @@ Now that the wordmark is plain, the holo system carries the brand identity entir
 
 - App icon + favicon (where the holo *is* the brand)
 - Holo cards in user binders (when card metadata indicates holo / secret rare / full art)
-- Premium tier badge (Foilio Plus indicator)
+- Premium tier badge (Bindercle Plus indicator)
 - Set completion + achievement moments
 - Loading states for high-value content
 
@@ -239,13 +239,13 @@ Minimum clearspace around any lockup = 1× cap height. Don't crowd it.
 
 ## 7. Holo Shimmer System (signature motif)
 
-The single visual element that makes Foilio unmistakable. **Used sparingly**, never as decoration.
+The single visual element that makes Bindercle unmistakable. **Used sparingly**, never as decoration.
 
 ### Use holo for:
 
 - Holo card representations (when card metadata.rarity = holo / secret rare / full art / alt art)
 - Logo dot
-- Premium tier indicators (Foilio Plus badge)
+- Premium tier indicators (Bindercle Plus badge)
 - Set completion celebrations
 - Achievement / milestone moments
 - The default loading shimmer for high-value content (binder hero loads)
@@ -292,7 +292,7 @@ Map device tilt (pitch + roll) to gradient angle. Range: `60deg ↔ 180deg`. Max
 
 ### Card photography
 
-- **User-uploaded, unenhanced.** Foilio never auto-filters card photos beyond a smart crop. Authenticity is the value.
+- **User-uploaded, unenhanced.** Bindercle never auto-filters card photos beyond a smart crop. Authenticity is the value.
 - Card aspect: standard Pokemon TCG card is `63 × 88mm` → `0.716:1`. Container crops respect this.
 - Background detection: auto-detect dominant background, soft-blur outside the card edge for binder thumbnails.
 

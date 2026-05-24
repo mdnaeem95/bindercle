@@ -50,7 +50,7 @@ export default function HomeScreen() {
             paddingBottom: 4,
           }}
         >
-          <Text variant="heading2">Foilio</Text>
+          <Text variant="heading2">Bindercle</Text>
         </View>
 
         {/* Tabs */}

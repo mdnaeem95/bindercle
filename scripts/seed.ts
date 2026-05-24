@@ -61,7 +61,7 @@ const admin = createClient(SUPABASE_URL, SERVICE_KEY, {
 // --------------------------------------------------------------------
 
 const SEED_PASSWORD = 'seed-foilio-2026-dev-only';
-const SEED_EMAIL_SUFFIX = '@foilio.test';
+const SEED_EMAIL_SUFFIX = '@bindercle.test';
 
 type AccentColor =
   | 'pink'

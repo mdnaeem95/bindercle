@@ -135,7 +135,7 @@ export default function OnboardingScreen() {
           >
             {/* Hero */}
             <View style={{ gap: 8, marginTop: 8 }}>
-              <Text variant="display2">Welcome to Foilio</Text>
+              <Text variant="display2">Welcome to Bindercle</Text>
               <Text variant="body" tone="secondary">
                 A home for your themed Pokemon collections. Set up your profile so people know who's
                 behind the binders.
