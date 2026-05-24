@@ -11,8 +11,11 @@ type InputProps = Omit<TextInputProps, 'style'> & {
   hint?: string;
   /** Error message — when present, the field renders in error state. */
   error?: string;
-  /** Right-aligned char count: maxLength must be set for this to render. */
+  /** Right-aligned char count: a limit must be set (either `maxLength` or `softMaxLength`). */
   showCharCount?: boolean;
+  /** Soft character limit — shows the count and highlights overflow, but doesn't block typing.
+   *  Use this when you want the form-level validator to enforce the limit instead of the input. */
+  softMaxLength?: number;
   /** Optional adornment rendered to the left of the input. */
   leadingAdornment?: ReactNode;
   /** Optional adornment rendered to the right of the input. */
@@ -26,6 +29,7 @@ export const Input = forwardRef<TextInput, InputProps>(function Input(
     hint,
     error,
     showCharCount,
+    softMaxLength,
     leadingAdornment,
     trailingAdornment,
     containerStyle,
@@ -95,26 +99,37 @@ export const Input = forwardRef<TextInput, InputProps>(function Input(
         {trailingAdornment}
       </View>
 
-      {(error || hint || (showCharCount && maxLength)) && (
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-          {error ? (
-            <Text variant="caption" style={{ color: theme.semantic.error }}>
-              {error}
-            </Text>
-          ) : hint ? (
-            <Text variant="caption" tone="tertiary">
-              {hint}
-            </Text>
-          ) : (
-            <View />
-          )}
-          {showCharCount && maxLength && (
-            <Text variant="caption" tone="tertiary">
-              {value?.length ?? 0}/{maxLength}
-            </Text>
-          )}
-        </View>
-      )}
+      {(() => {
+        const limit = maxLength ?? softMaxLength;
+        const charCountVisible = showCharCount && limit != null;
+        const length = value?.length ?? 0;
+        const overLimit = limit != null && length > limit;
+        if (!error && !hint && !charCountVisible) return null;
+        return (
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+            {error ? (
+              <Text variant="caption" style={{ color: theme.semantic.error }}>
+                {error}
+              </Text>
+            ) : hint ? (
+              <Text variant="caption" tone="tertiary">
+                {hint}
+              </Text>
+            ) : (
+              <View />
+            )}
+            {charCountVisible && (
+              <Text
+                variant="caption"
+                style={overLimit ? { color: theme.semantic.error } : undefined}
+                tone={overLimit ? undefined : 'tertiary'}
+              >
+                {length}/{limit}
+              </Text>
+            )}
+          </View>
+        );
+      })()}
     </View>
   );
 });

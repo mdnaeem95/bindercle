@@ -14,6 +14,7 @@ import { useAuthStore } from '@/stores/auth';
 import { AccentPicker, Button, ChipGroup, Input, Surface, Text, useTheme } from '@foilio/ui';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { router } from 'expo-router';
+import { ImagePlus } from 'lucide-react-native';
 import { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import {
@@ -47,10 +48,10 @@ export default function NewBinderScreen() {
     defaultValues: {
       title: '',
       description: '',
-      is_public: true,
+      is_public: false,
       tags: [],
       accent_color: undefined,
-      layout_type: 'grid',
+      layout_type: 'nine_pocket',
     },
   });
 
@@ -58,7 +59,7 @@ export default function NewBinderScreen() {
     reset({
       title: template.preset.title,
       description: template.preset.description,
-      is_public: true,
+      is_public: false,
       tags: template.preset.tags,
       accent_color: template.preset.accent_color,
       layout_type: template.preset.layout_type,
@@ -177,9 +178,12 @@ export default function NewBinderScreen() {
                     resizeMode="cover"
                   />
                 ) : (
-                  <Text variant="body" tone="secondary">
-                    Tap to pick a cover ✨
-                  </Text>
+                  <View style={{ alignItems: 'center', gap: 8 }}>
+                    <ImagePlus size={28} color={theme.colors.textSecondary} strokeWidth={1.6} />
+                    <Text variant="body" tone="secondary">
+                      Tap to pick a cover
+                    </Text>
+                  </View>
                 )}
               </Pressable>
             </View>
@@ -258,7 +262,7 @@ export default function NewBinderScreen() {
                       label: BINDER_LAYOUT_LABELS[layout],
                     }))}
                     value={value}
-                    onChange={(next) => onChange(next ?? 'grid')}
+                    onChange={(next) => onChange(next ?? 'nine_pocket')}
                   />
                 </View>
               )}

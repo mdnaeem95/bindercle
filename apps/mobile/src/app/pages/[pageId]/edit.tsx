@@ -1,9 +1,9 @@
 import { useDeletePage } from '@/hooks/useDeletePage';
 import { usePage } from '@/hooks/usePages';
 import { useUpdatePage } from '@/hooks/useUpdatePage';
-import { BINDER_LAYOUTS, BINDER_LAYOUT_LABELS, type BinderLayout } from '@/lib/validators/binder';
+import type { BinderLayout } from '@/lib/validators/binder';
 import { type PageFormValues, pageFormSchema } from '@/lib/validators/page';
-import { Button, ChipGroup, Input, Surface, Text, useTheme } from '@foilio/ui';
+import { Button, Input, Surface, Text, useTheme } from '@foilio/ui';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Controller, useForm } from 'react-hook-form';
@@ -26,12 +26,12 @@ export default function EditPageScreen() {
     resolver: zodResolver(pageFormSchema),
     defaultValues: {
       name: page?.name ?? '',
-      layout_type: (page?.layout_type as BinderLayout) ?? 'grid',
+      layout_type: (page?.layout_type as BinderLayout) ?? 'nine_pocket',
     },
     values: page
       ? {
           name: page.name ?? '',
-          layout_type: (page.layout_type as BinderLayout) ?? 'grid',
+          layout_type: (page.layout_type as BinderLayout) ?? 'nine_pocket',
         }
       : undefined,
   });
@@ -64,7 +64,12 @@ export default function EditPageScreen() {
         onPress: async () => {
           try {
             await deletePage.mutateAsync({ id: page.id, binder_id: page.binder_id });
-            router.replace(`/binders/${page.binder_id}`);
+            // Pop both the edit screen AND the page-detail beneath it.
+            if (router.canDismiss()) {
+              router.dismiss(2);
+            } else {
+              router.replace(`/binders/${page.binder_id}`);
+            }
           } catch (e) {
             const err = e as { message?: string };
             Alert.alert('Could not delete', err.message ?? 'Try again.');
@@ -139,27 +144,6 @@ export default function EditPageScreen() {
                   onBlur={onBlur}
                   maxLength={60}
                 />
-              )}
-            />
-
-            <Controller
-              control={control}
-              name="layout_type"
-              render={({ field: { value, onChange } }) => (
-                <View style={{ gap: 8 }}>
-                  <Text variant="caption" tone="secondary">
-                    Layout
-                  </Text>
-                  <ChipGroup
-                    clearable={false}
-                    options={BINDER_LAYOUTS.map((layout) => ({
-                      value: layout,
-                      label: BINDER_LAYOUT_LABELS[layout],
-                    }))}
-                    value={value}
-                    onChange={(next) => onChange(next ?? 'grid')}
-                  />
-                </View>
               )}
             />
 

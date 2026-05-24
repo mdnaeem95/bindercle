@@ -5,7 +5,7 @@ import { useAuthStore } from '@/stores/auth';
 import { ThemeContext, darkTheme } from '@foilio/ui';
 import * as Sentry from '@sentry/react-native';
 import { QueryClientProvider } from '@tanstack/react-query';
-import { Stack, useGlobalSearchParams, usePathname } from 'expo-router';
+import { Stack, router, useGlobalSearchParams, usePathname } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { PostHogProvider } from 'posthog-react-native';
 import { useEffect, useRef } from 'react';
@@ -42,6 +42,16 @@ function RootLayout() {
       previousPathname.current = pathname;
     }
   }, [pathname, params]);
+
+  // Global auth guard: if the session is ever invalidated (sign-out, token
+  // expiry, manual revoke), bounce to /sign-in from wherever we are. The
+  // 'unknown' check above keeps the splash visible until the initial check
+  // resolves, so this only fires after a real state change.
+  useEffect(() => {
+    if (authStatus === 'unauthenticated' && pathname !== '/sign-in') {
+      router.replace('/sign-in');
+    }
+  }, [authStatus, pathname]);
 
   // Keep the splash up until fonts AND the initial auth check are both done
   if (!fontsLoaded || authStatus === 'unknown') {

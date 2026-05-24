@@ -22,6 +22,7 @@ import {
 } from '@foilio/ui';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { router, useLocalSearchParams } from 'expo-router';
+import { ImagePlus } from 'lucide-react-native';
 import { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import {
@@ -59,7 +60,7 @@ export default function EditBinderScreen() {
       is_public: binder?.is_public ?? true,
       tags: binder?.tags.map((t) => t.name) ?? [],
       accent_color: (binder?.accent_color as AccentColor | null) ?? undefined,
-      layout_type: (binder?.layout_type as BinderFormValues['layout_type']) ?? 'grid',
+      layout_type: (binder?.layout_type as BinderFormValues['layout_type']) ?? 'nine_pocket',
     },
     values: binder
       ? {
@@ -68,7 +69,7 @@ export default function EditBinderScreen() {
           is_public: binder.is_public,
           tags: binder.tags.map((t) => t.name),
           accent_color: (binder.accent_color as AccentColor | null) ?? undefined,
-          layout_type: (binder.layout_type as BinderFormValues['layout_type']) ?? 'grid',
+          layout_type: (binder.layout_type as BinderFormValues['layout_type']) ?? 'nine_pocket',
         }
       : undefined,
   });
@@ -214,9 +215,12 @@ export default function EditBinderScreen() {
                     resizeMode="cover"
                   />
                 ) : (
-                  <Text variant="body" tone="secondary">
-                    Tap to pick a cover ✨
-                  </Text>
+                  <View style={{ alignItems: 'center', gap: 8 }}>
+                    <ImagePlus size={28} color={theme.colors.textSecondary} strokeWidth={1.6} />
+                    <Text variant="body" tone="secondary">
+                      Tap to pick a cover
+                    </Text>
+                  </View>
                 )}
               </Pressable>
             </View>
@@ -289,7 +293,7 @@ export default function EditBinderScreen() {
                       label: BINDER_LAYOUT_LABELS[layout],
                     }))}
                     value={value}
-                    onChange={(next) => onChange(next ?? 'grid')}
+                    onChange={(next) => onChange(next ?? 'nine_pocket')}
                   />
                 </View>
               )}

@@ -34,7 +34,7 @@ export function useCreateBinder() {
           cover_image_url: input.cover_image_url ?? null,
           is_public: input.is_public,
           accent_color: input.accent_color ?? null,
-          layout_type: input.layout_type ?? 'grid',
+          layout_type: input.layout_type ?? 'nine_pocket',
         })
         .select('*')
         .single();

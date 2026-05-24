@@ -6,14 +6,20 @@ import { z } from 'zod';
  * supabase migrations.
  */
 
-export const BINDER_LAYOUTS = ['grid', 'nine_pocket', 'scrapbook', 'spread'] as const;
+export const BINDER_LAYOUTS = ['four_pocket', 'nine_pocket', 'sixteen_pocket'] as const;
 export type BinderLayout = (typeof BINDER_LAYOUTS)[number];
 
 export const BINDER_LAYOUT_LABELS: Record<BinderLayout, string> = {
-  grid: 'Grid',
+  four_pocket: '4-pocket',
   nine_pocket: '9-pocket',
-  scrapbook: 'Scrapbook',
-  spread: 'Spread',
+  sixteen_pocket: '16-pocket',
+};
+
+/** Pocket columns per layout — also the slot count's square root. */
+export const BINDER_LAYOUT_COLUMNS: Record<BinderLayout, number> = {
+  four_pocket: 2,
+  nine_pocket: 3,
+  sixteen_pocket: 4,
 };
 
 export const binderFormSchema = z.object({

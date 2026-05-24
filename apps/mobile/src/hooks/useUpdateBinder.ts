@@ -1,5 +1,6 @@
 import { binderQueryKey } from '@/hooks/useBinder';
 import { bindersQueryKey } from '@/hooks/useBinders';
+import { discoverBindersQueryKey } from '@/hooks/useDiscoverBinders';
 import { trackEvent } from '@/lib/observability';
 import { supabase } from '@/lib/supabase';
 import { setBinderTags } from '@/lib/tags';
@@ -42,6 +43,8 @@ export function useUpdateBinder() {
       });
       queryClient.invalidateQueries({ queryKey: bindersQueryKey(userId) });
       queryClient.invalidateQueries({ queryKey: binderQueryKey(binder.id) });
+      // Public/private + cover changes affect the Discover feed too.
+      queryClient.invalidateQueries({ queryKey: discoverBindersQueryKey });
     },
   });
 }

@@ -34,7 +34,7 @@ export function useCreatePage() {
           .select('layout_type')
           .eq('id', input.binder_id)
           .single();
-        layout = binder?.layout_type ?? 'grid';
+        layout = binder?.layout_type ?? 'nine_pocket';
       }
 
       const { data, error } = await supabase

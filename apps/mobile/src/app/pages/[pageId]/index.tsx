@@ -1,34 +1,116 @@
 import { CardLayout } from '@/components/CardLayout';
+import { DraggableGrid } from '@/components/DraggableGrid';
 import { useBinder } from '@/hooks/useBinder';
-import { type CardWithExtras, useCardsForPage } from '@/hooks/useCards';
-import { usePage } from '@/hooks/usePages';
+import { type CardWithExtras, useCardsForBinder } from '@/hooks/useCards';
+import { type PageWithCount, usePage, usePagesForBinder } from '@/hooks/usePages';
 import { useReorderCards } from '@/hooks/useReorderCards';
 import type { BinderLayout } from '@/lib/validators/binder';
+import { useAuthStore } from '@/stores/auth';
 import { type AccentColor, Button, Surface, Text, accentSolid, useTheme } from '@foilio/ui';
 import { router, useLocalSearchParams } from 'expo-router';
-import { useEffect, useState } from 'react';
-import { Alert, Image, Pressable, ScrollView, View } from 'react-native';
-import DraggableFlatList, { type RenderItemParams } from 'react-native-draggable-flatlist';
+import { Sparkles } from 'lucide-react-native';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import {
+  Alert,
+  FlatList,
+  Image,
+  type LayoutChangeEvent,
+  type NativeScrollEvent,
+  type NativeSyntheticEvent,
+  Pressable,
+  ScrollView,
+  View,
+  useWindowDimensions,
+} from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function PageDetailScreen() {
   const theme = useTheme();
-  const insets = useSafeAreaInsets();
   const { pageId } = useLocalSearchParams<{ pageId: string }>();
-  const { data: page, isLoading: pageLoading } = usePage(pageId);
-  const { data: binder } = useBinder(page?.binder_id);
-  const { data: cards } = useCardsForPage(pageId);
+  const { data: initialPage, isLoading: pageLoading } = usePage(pageId);
+  const { data: binder } = useBinder(initialPage?.binder_id);
+  const { data: pages } = usePagesForBinder(initialPage?.binder_id);
+  // One query for the whole binder's cards is cheaper than N per-page fetches as the
+  // user swipes between pages.
+  const { data: allCards } = useCardsForBinder(initialPage?.binder_id);
   const reorderCards = useReorderCards();
+  const viewerId = useAuthStore((s) => s.user?.id);
+
+  const initialIndex = useMemo(() => {
+    if (!pages || pages.length === 0) return 0;
+    const idx = pages.findIndex((p) => p.id === pageId);
+    return idx >= 0 ? idx : 0;
+  }, [pages, pageId]);
+
+  const [currentIndex, setCurrentIndex] = useState(0);
+  // When pages first load (or the URL pageId changes), sync the visible index.
+  useEffect(() => {
+    setCurrentIndex(initialIndex);
+  }, [initialIndex]);
+
+  const cardsByPage = useMemo(() => {
+    const map = new Map<string, CardWithExtras[]>();
+    for (const c of allCards ?? []) {
+      if (!c.page_id) continue;
+      const list = map.get(c.page_id) ?? [];
+      list.push(c);
+      map.set(c.page_id, list);
+    }
+    return map;
+  }, [allCards]);
+
+  const currentPage = pages?.[currentIndex] ?? initialPage ?? null;
+  const isOwner = !!currentPage && viewerId === currentPage.owner_id;
 
   const [reorganizing, setReorganizing] = useState(false);
   const [draftCards, setDraftCards] = useState<CardWithExtras[]>([]);
+  const [gridWidth, setGridWidth] = useState(0);
 
-  useEffect(() => {
-    setDraftCards(cards ?? []);
-  }, [cards]);
+  const { width: screenWidth } = useWindowDimensions();
+  const flatListRef = useRef<FlatList<PageWithCount>>(null);
 
-  if (pageLoading || !page) {
+  const enterReorganize = () => {
+    if (!currentPage) return;
+    setDraftCards(cardsByPage.get(currentPage.id) ?? []);
+    setReorganizing(true);
+  };
+
+  const exitReorganize = async () => {
+    if (!currentPage) return;
+    const original = cardsByPage.get(currentPage.id) ?? [];
+    setReorganizing(false);
+    const changed =
+      draftCards.length !== original.length || draftCards.some((c, i) => c.id !== original[i]?.id);
+    if (!changed) return;
+    try {
+      await reorderCards.mutateAsync({
+        page_id: currentPage.id,
+        binder_id: currentPage.binder_id,
+        card_ids: draftCards.map((c) => c.id),
+      });
+    } catch (e) {
+      const err = e as { message?: string };
+      Alert.alert("Couldn't save order", err.message ?? 'Try again.');
+    }
+  };
+
+  const handleOrderChange = (orderedIds: string[]) => {
+    const byId = new Map(draftCards.map((c) => [c.id, c]));
+    const next = orderedIds.map((id) => byId.get(id)).filter((c): c is CardWithExtras => !!c);
+    setDraftCards(next);
+  };
+
+  const onGridLayout = (e: LayoutChangeEvent) => {
+    setGridWidth(e.nativeEvent.layout.width);
+  };
+
+  const onPagerScrollEnd = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const idx = Math.round(e.nativeEvent.contentOffset.x / screenWidth);
+    if (idx !== currentIndex) setCurrentIndex(idx);
+  };
+
+  if (pageLoading || !initialPage || !binder || !pages) {
     return (
       <Surface level={0} style={{ flex: 1 }}>
         <SafeAreaView style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
@@ -38,94 +120,17 @@ export default function PageDetailScreen() {
     );
   }
 
-  const cardCount = cards?.length ?? 0;
-  const accentTint = accentSolid(binder?.accent_color as AccentColor | null);
-  const displayName = page.name?.trim() || `Page ${page.position + 1}`;
-
-  const enterReorganize = () => {
-    setDraftCards(cards ?? []);
-    setReorganizing(true);
-  };
-
-  const exitReorganize = async () => {
-    setReorganizing(false);
-    const original = cards ?? [];
-    const changed =
-      draftCards.length !== original.length || draftCards.some((c, i) => c.id !== original[i]?.id);
-    if (!changed) return;
-    try {
-      await reorderCards.mutateAsync({
-        page_id: page.id,
-        binder_id: page.binder_id,
-        card_ids: draftCards.map((c) => c.id),
-      });
-    } catch (e) {
-      const err = e as { message?: string };
-      Alert.alert("Couldn't save order", err.message ?? 'Try again.');
-    }
-  };
-
-  const renderDragItem = ({ item, drag, isActive }: RenderItemParams<CardWithExtras>) => {
-    const photoUrl = item.photos[0]?.url ?? item.tcg_card?.image_small ?? null;
-    return (
-      <Pressable
-        onLongPress={drag}
-        delayLongPress={150}
-        style={{
-          flexDirection: 'row',
-          alignItems: 'center',
-          padding: 12,
-          marginBottom: 8,
-          borderRadius: 12,
-          backgroundColor: isActive ? theme.colors.bgElevated3 : theme.colors.bgElevated1,
-          borderWidth: 1,
-          borderColor: isActive ? theme.colors.textPrimary : theme.colors.borderSubtle,
-          gap: 12,
-        }}
-      >
-        {photoUrl ? (
-          <Image
-            source={{ uri: photoUrl }}
-            style={{
-              width: 36,
-              height: 50,
-              borderRadius: 4,
-              backgroundColor: theme.colors.bgElevated2,
-            }}
-            resizeMode="cover"
-          />
-        ) : (
-          <View
-            style={{
-              width: 36,
-              height: 50,
-              borderRadius: 4,
-              backgroundColor: theme.colors.bgElevated2,
-            }}
-          />
-        )}
-        <View style={{ flex: 1, gap: 2 }}>
-          <Text variant="body" numberOfLines={1}>
-            {item.name}
-          </Text>
-          {item.caption && (
-            <Text variant="caption" tone="tertiary" numberOfLines={1}>
-              {item.caption}
-            </Text>
-          )}
-        </View>
-        <Text variant="display2" tone="tertiary">
-          ⋮⋮
-        </Text>
-      </Pressable>
-    );
-  };
+  const accentTint = accentSolid(binder.accent_color as AccentColor | null);
+  const displayName =
+    currentPage?.name?.trim() || `Page ${(currentPage?.position ?? currentIndex) + 1}`;
+  const binderLayout = (binder.layout_type as BinderLayout) ?? 'nine_pocket';
+  const pageCount = pages.length;
 
   return (
     <Surface level={0} style={{ flex: 1 }}>
       <GestureHandlerRootView style={{ flex: 1 }}>
         <SafeAreaView style={{ flex: 1 }} edges={['top']}>
-          {/* Header */}
+          {/* Header — reflects whichever page is currently visible. */}
           <View
             style={{
               flexDirection: 'row',
@@ -146,11 +151,10 @@ export default function PageDetailScreen() {
               <Text variant="heading3" style={accentTint ? { color: accentTint } : undefined}>
                 {displayName}
               </Text>
-              {binder && (
-                <Text variant="caption" tone="tertiary">
-                  {binder.title}
-                </Text>
-              )}
+              <Text variant="caption" tone="tertiary">
+                {binder.title}
+                {pageCount > 1 ? ` · ${currentIndex + 1} / ${pageCount}` : ''}
+              </Text>
             </View>
             {reorganizing ? (
               <Pressable onPress={exitReorganize} hitSlop={12}>
@@ -158,87 +162,179 @@ export default function PageDetailScreen() {
                   Done
                 </Text>
               </Pressable>
-            ) : (
-              <Pressable onPress={() => router.push(`/pages/${page.id}/edit`)} hitSlop={12}>
+            ) : isOwner && currentPage ? (
+              <Pressable onPress={() => router.push(`/pages/${currentPage.id}/edit`)} hitSlop={12}>
                 <Text variant="body" tone="secondary">
                   Edit
                 </Text>
               </Pressable>
+            ) : (
+              <View style={{ width: 32 }} />
             )}
           </View>
 
-          {reorganizing ? (
-            <View style={{ flex: 1, padding: 16 }}>
-              <Text
-                variant="bodySmall"
-                tone="secondary"
-                align="center"
-                style={{ marginBottom: 12 }}
-              >
-                long-press a card, then drag to rearrange
-              </Text>
-              <DraggableFlatList
-                data={draftCards}
-                onDragEnd={({ data }) => setDraftCards(data)}
-                keyExtractor={(item) => item.id}
-                renderItem={renderDragItem}
-                contentContainerStyle={{ paddingBottom: insets.bottom + 24 }}
-              />
-            </View>
-          ) : (
-            <ScrollView
-              contentContainerStyle={{
-                padding: 16,
-                paddingBottom: 48 + insets.bottom,
-                gap: 12,
-              }}
-            >
-              <View style={{ flexDirection: 'row', justifyContent: 'flex-end', gap: 8 }}>
-                {cardCount > 1 && (
-                  <Button variant="ghost" size="sm" onPress={enterReorganize}>
-                    Reorganize
-                  </Button>
-                )}
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  onPress={() => router.push(`/pages/${page.id}/cards/new`)}
-                >
-                  + Add card
-                </Button>
-              </View>
-
-              {cardCount === 0 ? (
-                <View
-                  style={{
-                    marginTop: 8,
-                    padding: 32,
-                    alignItems: 'center',
-                    gap: 12,
-                    borderRadius: 16,
-                    borderWidth: 1,
-                    borderStyle: 'dashed',
-                    borderColor: theme.colors.borderSubtle,
-                  }}
-                >
-                  <Text variant="body" align="center">
-                    empty page, full potential 💫
-                  </Text>
-                  <Text variant="caption" tone="secondary" align="center">
-                    Add the first card to make this page yours.
-                  </Text>
-                </View>
-              ) : (
-                <CardLayout
-                  layout={(page.layout_type as BinderLayout) ?? 'grid'}
-                  cards={cards ?? []}
-                  onCardPress={(cardId) => router.push(`/cards/${cardId}`)}
+          {/* Horizontal page pager — disabled while reorganizing so drags don't fight scrolls. */}
+          <FlatList
+            ref={flatListRef}
+            data={pages}
+            horizontal
+            pagingEnabled
+            scrollEnabled={!reorganizing}
+            showsHorizontalScrollIndicator={false}
+            initialScrollIndex={initialIndex}
+            getItemLayout={(_, idx) => ({
+              length: screenWidth,
+              offset: screenWidth * idx,
+              index: idx,
+            })}
+            onMomentumScrollEnd={onPagerScrollEnd}
+            keyExtractor={(p) => p.id}
+            renderItem={({ item: p, index }) => {
+              const pageCards = cardsByPage.get(p.id) ?? [];
+              const isActive = index === currentIndex;
+              return (
+                <PageBody
+                  width={screenWidth}
+                  page={p}
+                  cards={pageCards}
+                  binderLayout={binderLayout}
+                  isOwner={isOwner && isActive}
+                  reorganizing={reorganizing && isActive}
+                  draftCards={isActive ? draftCards : pageCards}
+                  gridWidth={gridWidth}
+                  onGridLayout={onGridLayout}
+                  onOrderChange={handleOrderChange}
+                  onEnterReorganize={enterReorganize}
                 />
-              )}
-            </ScrollView>
-          )}
+              );
+            }}
+          />
         </SafeAreaView>
       </GestureHandlerRootView>
     </Surface>
+  );
+}
+
+type PageBodyProps = {
+  width: number;
+  page: PageWithCount;
+  cards: CardWithExtras[];
+  binderLayout: BinderLayout;
+  isOwner: boolean;
+  reorganizing: boolean;
+  draftCards: CardWithExtras[];
+  gridWidth: number;
+  onGridLayout: (e: LayoutChangeEvent) => void;
+  onOrderChange: (ids: string[]) => void;
+  onEnterReorganize: () => void;
+};
+
+function PageBody({
+  width,
+  page,
+  cards,
+  binderLayout,
+  isOwner,
+  reorganizing,
+  draftCards,
+  gridWidth,
+  onGridLayout,
+  onOrderChange,
+  onEnterReorganize,
+}: PageBodyProps) {
+  const theme = useTheme();
+  const insets = useSafeAreaInsets();
+  const cardCount = cards.length;
+
+  if (reorganizing) {
+    return (
+      <ScrollView
+        style={{ width }}
+        contentContainerStyle={{ padding: 16, paddingBottom: insets.bottom + 24 }}
+      >
+        <Text variant="bodySmall" tone="secondary" align="center" style={{ marginBottom: 16 }}>
+          Long-press a card, then drag to rearrange
+        </Text>
+        <View onLayout={onGridLayout}>
+          {gridWidth > 0 && (
+            <DraggableGrid
+              items={draftCards}
+              keyExtractor={(c) => c.id}
+              containerWidth={gridWidth}
+              onOrderChange={onOrderChange}
+              renderItem={(c) => {
+                const photoUrl = c.photos[0]?.url ?? c.tcg_card?.image_small ?? null;
+                return photoUrl ? (
+                  <Image
+                    source={{ uri: photoUrl }}
+                    style={{ width: '100%', height: '100%' }}
+                    resizeMode="cover"
+                  />
+                ) : (
+                  <View style={{ flex: 1, backgroundColor: theme.colors.bgElevated2 }} />
+                );
+              }}
+            />
+          )}
+        </View>
+      </ScrollView>
+    );
+  }
+
+  return (
+    <ScrollView
+      style={{ width }}
+      contentContainerStyle={{
+        padding: 16,
+        paddingBottom: 48 + insets.bottom,
+        gap: 12,
+      }}
+    >
+      {isOwner && (
+        <View style={{ flexDirection: 'row', justifyContent: 'flex-end', gap: 8 }}>
+          {cardCount > 1 && (
+            <Button variant="ghost" size="sm" onPress={onEnterReorganize}>
+              Reorganize
+            </Button>
+          )}
+          <Button
+            variant="secondary"
+            size="sm"
+            onPress={() => router.push(`/pages/${page.id}/cards/new`)}
+          >
+            + Add card
+          </Button>
+        </View>
+      )}
+
+      {cardCount === 0 ? (
+        <View
+          style={{
+            marginTop: 8,
+            padding: 32,
+            alignItems: 'center',
+            gap: 12,
+            borderRadius: 16,
+            borderWidth: 1,
+            borderStyle: 'dashed',
+            borderColor: theme.colors.borderSubtle,
+          }}
+        >
+          <Sparkles size={32} color={theme.colors.textTertiary} strokeWidth={1.6} />
+          <Text variant="body" align="center">
+            Empty page, full potential
+          </Text>
+          <Text variant="caption" tone="secondary" align="center">
+            Add the first card to make this page yours.
+          </Text>
+        </View>
+      ) : (
+        <CardLayout
+          layout={binderLayout}
+          cards={cards}
+          onCardPress={(cardId) => router.push(`/cards/${cardId}`)}
+        />
+      )}
+    </ScrollView>
   );
 }

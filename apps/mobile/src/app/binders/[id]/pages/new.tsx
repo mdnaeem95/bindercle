@@ -1,8 +1,8 @@
 import { useBinder } from '@/hooks/useBinder';
 import { useCreatePage } from '@/hooks/useCreatePage';
-import { BINDER_LAYOUTS, BINDER_LAYOUT_LABELS, type BinderLayout } from '@/lib/validators/binder';
+import type { BinderLayout } from '@/lib/validators/binder';
 import { type PageFormValues, pageFormSchema } from '@/lib/validators/page';
-import { Button, ChipGroup, Input, Surface, Text, useTheme } from '@foilio/ui';
+import { Button, Input, Surface, Text, useTheme } from '@foilio/ui';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Controller, useForm } from 'react-hook-form';
@@ -16,7 +16,8 @@ export default function NewPageScreen() {
   const { data: binder } = useBinder(binderId);
   const createPage = useCreatePage();
 
-  const defaultLayout = (binder?.layout_type as BinderLayout) ?? 'grid';
+  // Pages always inherit the binder's pocket layout — no per-page picker.
+  const binderLayout = (binder?.layout_type as BinderLayout) ?? 'nine_pocket';
 
   const {
     control,
@@ -24,14 +25,8 @@ export default function NewPageScreen() {
     formState: { errors, isSubmitting },
   } = useForm<PageFormValues>({
     resolver: zodResolver(pageFormSchema),
-    defaultValues: {
-      name: '',
-      layout_type: defaultLayout,
-    },
-    values: {
-      name: '',
-      layout_type: defaultLayout,
-    },
+    defaultValues: { name: '', layout_type: binderLayout },
+    values: { name: '', layout_type: binderLayout },
   });
 
   const onSubmit = async (values: PageFormValues) => {
@@ -40,7 +35,7 @@ export default function NewPageScreen() {
       const page = await createPage.mutateAsync({
         binder_id: binderId,
         name: values.name?.trim() || null,
-        layout_type: values.layout_type,
+        layout_type: binderLayout,
       });
       router.replace(`/pages/${page.id}`);
     } catch (e) {
@@ -104,27 +99,6 @@ export default function NewPageScreen() {
                   onBlur={onBlur}
                   maxLength={60}
                 />
-              )}
-            />
-
-            <Controller
-              control={control}
-              name="layout_type"
-              render={({ field: { value, onChange } }) => (
-                <View style={{ gap: 8 }}>
-                  <Text variant="caption" tone="secondary">
-                    Layout
-                  </Text>
-                  <ChipGroup
-                    clearable={false}
-                    options={BINDER_LAYOUTS.map((layout) => ({
-                      value: layout,
-                      label: BINDER_LAYOUT_LABELS[layout],
-                    }))}
-                    value={value}
-                    onChange={(next) => onChange(next ?? 'grid')}
-                  />
-                </View>
               )}
             />
           </ScrollView>

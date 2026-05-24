@@ -1,5 +1,16 @@
 import type { BinderLayout } from '@/lib/validators/binder';
 import type { AccentColor } from '@foilio/ui';
+import {
+  Cake,
+  Heart,
+  type LucideIcon,
+  Moon,
+  Rainbow,
+  Search,
+  Sparkles,
+  Trophy,
+  Zap,
+} from 'lucide-react-native';
 
 /**
  * Themed scaffolds for the new-binder flow.
@@ -12,8 +23,8 @@ import type { AccentColor } from '@foilio/ui';
 
 export interface BinderTemplate {
   id: string;
-  /** Card emoji + name on the picker tile. */
-  emoji: string;
+  /** Picker tile icon. */
+  icon: LucideIcon;
   name: string;
   blurb: string;
   /** Pre-filled values. */
@@ -29,7 +40,7 @@ export interface BinderTemplate {
 export const BINDER_TEMPLATES: BinderTemplate[] = [
   {
     id: 'master-set',
-    emoji: '🏆',
+    icon: Trophy,
     name: 'Master set',
     blurb: 'Every card from one set, every variant.',
     preset: {
@@ -37,12 +48,12 @@ export const BINDER_TEMPLATES: BinderTemplate[] = [
       description: 'Every card from this set — base, holo, reverse, full art, the whole shelf.',
       tags: ['master-set', 'complete'],
       accent_color: 'butter',
-      layout_type: 'nine_pocket',
+      layout_type: 'sixteen_pocket',
     },
   },
   {
     id: 'all-the',
-    emoji: '⚡',
+    icon: Zap,
     name: 'All the [Pokemon]',
     blurb: 'Every printing of one Pokemon. Pikachus. Charizards. Squirtles. You decide.',
     preset: {
@@ -50,12 +61,12 @@ export const BINDER_TEMPLATES: BinderTemplate[] = [
       description: 'Every printing I can find. The classics, the alt arts, the weird ones.',
       tags: ['mono-pokemon', 'completionist'],
       accent_color: 'lemon',
-      layout_type: 'scrapbook',
+      layout_type: 'nine_pocket',
     },
   },
   {
     id: 'rainbow',
-    emoji: '🌈',
+    icon: Rainbow,
     name: 'Rainbow rares',
     blurb: 'Only the iridescent ones.',
     preset: {
@@ -63,12 +74,12 @@ export const BINDER_TEMPLATES: BinderTemplate[] = [
       description: 'Only rainbow rares. Only the shimmer.',
       tags: ['rainbow-rare', 'shiny-things'],
       accent_color: 'pink',
-      layout_type: 'spread',
+      layout_type: 'four_pocket',
     },
   },
   {
     id: 'midnight-pulls',
-    emoji: '🌙',
+    icon: Moon,
     name: 'Midnight pulls',
     blurb: 'Cards from packs you cracked at launch.',
     preset: {
@@ -76,12 +87,12 @@ export const BINDER_TEMPLATES: BinderTemplate[] = [
       description: 'Cards I pulled the night the set dropped. Receipts in my notes app.',
       tags: ['midnight', 'pulls', 'launch-day'],
       accent_color: 'lavender',
-      layout_type: 'grid',
+      layout_type: 'nine_pocket',
     },
   },
   {
     id: 'first-edition',
-    emoji: '✨',
+    icon: Sparkles,
     name: 'First editions',
     blurb: 'The stamped ones. The originals.',
     preset: {
@@ -89,12 +100,12 @@ export const BINDER_TEMPLATES: BinderTemplate[] = [
       description: '1st Edition stamped cards only. The originals.',
       tags: ['first-edition', 'vintage'],
       accent_color: 'cherry',
-      layout_type: 'spread',
+      layout_type: 'four_pocket',
     },
   },
   {
     id: 'cute-energy',
-    emoji: '🥺',
+    icon: Heart,
     name: 'Cute energy',
     blurb: 'Just the ones that made you go "awwww."',
     preset: {
@@ -102,12 +113,12 @@ export const BINDER_TEMPLATES: BinderTemplate[] = [
       description: 'A binder of cards that made me go "awwww." No criteria beyond that.',
       tags: ['cute', 'vibes'],
       accent_color: 'rose',
-      layout_type: 'scrapbook',
+      layout_type: 'nine_pocket',
     },
   },
   {
     id: 'errors-and-misprints',
-    emoji: '🔍',
+    icon: Search,
     name: 'Errors & misprints',
     blurb: 'Off-center, miscut, blank backs, weird ones.',
     preset: {
@@ -116,12 +127,12 @@ export const BINDER_TEMPLATES: BinderTemplate[] = [
         "Off-center, miscut, blank backs, ink errors. The ones the printer didn't mean to make.",
       tags: ['errors', 'misprints', 'weird'],
       accent_color: 'sage',
-      layout_type: 'grid',
+      layout_type: 'nine_pocket',
     },
   },
   {
     id: 'birthday-binder',
-    emoji: '🎂',
+    icon: Cake,
     name: 'Birthday binder',
     blurb: 'One card from each year. Time capsule.',
     preset: {
@@ -129,7 +140,7 @@ export const BINDER_TEMPLATES: BinderTemplate[] = [
       description: 'One card from every birthday. A timeline of who I was that year.',
       tags: ['birthday', 'timeline', 'sentimental'],
       accent_color: 'peach',
-      layout_type: 'spread',
+      layout_type: 'four_pocket',
     },
   },
 ];

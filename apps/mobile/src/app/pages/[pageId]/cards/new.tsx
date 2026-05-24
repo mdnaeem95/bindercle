@@ -12,6 +12,7 @@ import {
 import { Button, ChipGroup, Input, Surface, Text, useTheme } from '@foilio/ui';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { router, useLocalSearchParams } from 'expo-router';
+import { CheckCircle2 } from 'lucide-react-native';
 import { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import {
@@ -318,9 +319,12 @@ export default function NewCardScreen() {
                     />
                   )}
                   <View style={{ flex: 1, gap: 2 }}>
-                    <Text variant="caption" tone="secondary">
-                      ✓ Linked to TCG card
-                    </Text>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                      <CheckCircle2 size={14} color={theme.colors.textSecondary} strokeWidth={2} />
+                      <Text variant="caption" tone="secondary">
+                        Linked to TCG card
+                      </Text>
+                    </View>
                     <Text variant="caption" tone="tertiary" numberOfLines={2}>
                       {photos.length === 0
                         ? 'Official art will display until you add your own.'

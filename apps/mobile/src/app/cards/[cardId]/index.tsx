@@ -2,6 +2,7 @@ import { useCard } from '@/hooks/useCards';
 import { CARD_CONDITION_LABELS, type CardCondition } from '@/lib/validators/card';
 import { Surface, Text, useTheme } from '@foilio/ui';
 import { router, useLocalSearchParams } from 'expo-router';
+import { ArrowLeft, Camera } from 'lucide-react-native';
 import { Image, Pressable, ScrollView, View } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -70,8 +71,9 @@ export default function CardDetailScreen() {
               gap: 6,
             }}
           >
+            <Camera size={12} color={theme.colors.textTertiary} strokeWidth={1.8} />
             <Text variant="caption" tone="tertiary">
-              Official art — your own photo will replace this 📸
+              Official art — your own photo will replace this
             </Text>
           </View>
         )}
@@ -91,14 +93,14 @@ export default function CardDetailScreen() {
               hitSlop={12}
               style={{
                 backgroundColor: 'rgba(10,10,15,0.6)',
-                paddingHorizontal: 12,
-                paddingVertical: 8,
-                borderRadius: 9999,
+                width: 36,
+                height: 36,
+                borderRadius: 18,
+                alignItems: 'center',
+                justifyContent: 'center',
               }}
             >
-              <Text variant="body" style={{ color: '#F8F8F2' }}>
-                ←
-              </Text>
+              <ArrowLeft size={18} color="#F8F8F2" strokeWidth={2} />
             </Pressable>
             <Pressable
               onPress={() => router.push(`/cards/${card.id}/edit`)}

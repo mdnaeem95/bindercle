@@ -32,7 +32,7 @@ export function BinderTemplatePicker({ onPick, onSkip }: BinderTemplatePickerPro
           }}
         >
           <View style={{ gap: 8 }}>
-            <Text variant="display2">Start With a Vibe ✨</Text>
+            <Text variant="display2">Start With a Vibe</Text>
             <Text variant="body" tone="secondary">
               Pick a theme to scaffold a binder — or start blank and make it yours.
             </Text>
@@ -41,6 +41,7 @@ export function BinderTemplatePicker({ onPick, onSkip }: BinderTemplatePickerPro
           <View style={{ gap: 12 }}>
             {BINDER_TEMPLATES.map((template) => {
               const tint = accentSolid(template.preset.accent_color);
+              const Icon = template.icon;
               return (
                 <Pressable
                   key={template.id}
@@ -57,7 +58,18 @@ export function BinderTemplatePicker({ onPick, onSkip }: BinderTemplatePickerPro
                     gap: 16,
                   })}
                 >
-                  <Text variant="display2">{template.emoji}</Text>
+                  <View
+                    style={{
+                      width: 44,
+                      height: 44,
+                      borderRadius: 22,
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      backgroundColor: theme.colors.bgElevated2,
+                    }}
+                  >
+                    <Icon size={22} color={tint ?? theme.colors.textPrimary} strokeWidth={1.8} />
+                  </View>
                   <View style={{ flex: 1, gap: 4 }}>
                     <Text variant="heading3" style={tint ? { color: tint } : undefined}>
                       {template.name}
