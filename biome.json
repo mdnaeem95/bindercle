@@ -19,9 +19,22 @@
       "apps/mobile/assets/**",
       "apps/mobile/scripts/**",
       "packages/api-client/src/database.types.ts",
-      "supabase/.temp/**"
+      "supabase/.temp/**",
+      "website/**"
     ]
   },
+  "overrides": [
+    {
+      "include": ["scripts/**"],
+      "linter": {
+        "rules": {
+          "suspicious": {
+            "noConsoleLog": "off"
+          }
+        }
+      }
+    }
+  ],
   "formatter": {
     "enabled": true,
     "indentStyle": "space",

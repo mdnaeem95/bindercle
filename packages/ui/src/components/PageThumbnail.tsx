@@ -71,7 +71,6 @@ export function PageThumbnail({
               const url = slots[slotIdx];
               return (
                 <View
-                  // biome-ignore lint/suspicious/noArrayIndexKey: fixed-length skeleton
                   key={`slot-${slotIdx}`}
                   style={{
                     flex: 1,
