@@ -33,6 +33,10 @@ export default function HomeScreen() {
   if (status === 'unauthenticated') {
     return <Redirect href="/sign-in" />;
   }
+  // First-run flow — pick a handle, etc — before the user sees the home feed.
+  if (profile && !profile.onboarded_at) {
+    return <Redirect href="/onboarding" />;
+  }
 
   return (
     <Surface level={0} style={{ flex: 1 }}>

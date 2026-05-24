@@ -491,6 +491,7 @@ export type Database = {
           handle: string
           id: string
           link: string | null
+          onboarded_at: string | null
           updated_at: string
         }
         Insert: {
@@ -501,6 +502,7 @@ export type Database = {
           handle: string
           id: string
           link?: string | null
+          onboarded_at?: string | null
           updated_at?: string
         }
         Update: {
@@ -511,6 +513,7 @@ export type Database = {
           handle?: string
           id?: string
           link?: string | null
+          onboarded_at?: string | null
           updated_at?: string
         }
         Relationships: []
