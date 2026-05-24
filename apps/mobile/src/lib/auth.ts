@@ -67,7 +67,7 @@ export async function signInWithApple() {
  * for a Supabase session.
  *
  * Uses Supabase's signInWithOAuth → returns a URL → we open it via expo-auth-session
- * → user authenticates with Google → redirects back to `foilio://auth-callback` with
+ * → user authenticates with Google → redirects back to `bindercle://auth-callback` with
  * tokens in the URL fragment → we extract and set the session.
  */
 export async function signInWithGoogle() {
@@ -76,7 +76,7 @@ export async function signInWithGoogle() {
   }
 
   const redirectTo = AuthSession.makeRedirectUri({
-    scheme: 'foilio',
+    scheme: 'bindercle',
     path: 'auth-callback',
   });
 

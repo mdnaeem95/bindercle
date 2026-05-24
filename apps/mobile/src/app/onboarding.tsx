@@ -36,11 +36,9 @@ export default function OnboardingScreen() {
   const updateProfile = useUpdateProfile();
   const [avatarBusy, setAvatarBusy] = useState(false);
 
-  // Gates: not signed in → sign-in. Already onboarded → home (lets them
-  // visit /onboarding manually without bouncing into a loop after save).
-  if (status === 'unauthenticated') return <Redirect href="/sign-in" />;
-  if (profile?.onboarded_at) return <Redirect href="/" />;
-
+  // ALL hooks must run on every render — if we early-return above useForm /
+  // useHandleAvailability, React throws "rendered fewer hooks than expected"
+  // the moment onboarded_at flips truthy after submit.
   const {
     control,
     handleSubmit,
@@ -66,6 +64,11 @@ export default function OnboardingScreen() {
 
   const watchedHandle = watch('handle');
   const availability = useHandleAvailability(watchedHandle);
+
+  // Gates after all hooks: not signed in → sign-in. Already onboarded → home
+  // (lets a signed-in user visit /onboarding manually without a loop after save).
+  if (status === 'unauthenticated') return <Redirect href="/sign-in" />;
+  if (profile?.onboarded_at) return <Redirect href="/" />;
 
   const onChangeAvatar = async () => {
     if (!userId) return;
