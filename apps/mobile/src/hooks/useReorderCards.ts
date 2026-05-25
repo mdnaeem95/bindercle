@@ -6,32 +6,35 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 interface ReorderCardsInput {
   page_id: string;
   binder_id: string;
-  /** Card IDs in the new desired order — index becomes the new position. */
-  card_ids: string[];
+  /**
+   * The cards whose positions changed, each with its new slot position.
+   * Caller is responsible for only including cards that actually moved —
+   * the typical drag yields one entry (empty target) or two (swap).
+   */
+  updates: { card_id: string; position: number }[];
 }
 
 /**
- * Persist a new card ordering on a page.
+ * Persist new card positions on a page. Positions are sparse — slot 4 with
+ * no entry is a legit empty pocket.
  *
- * Implementation: parallel single-row updates, one per card. Acceptable for
- * the typical page size (≤ 20 cards). If pages get larger, replace with a
- * Postgres RPC that updates positions in a single transaction.
- *
- * The caller is responsible for optimistic UI — this hook just persists.
+ * Implementation: parallel single-row updates. Acceptable for the typical
+ * page change (1–2 cards per drag).
  */
 export function useReorderCards() {
   const queryClient = useQueryClient();
 
   return useMutation<void, Error, ReorderCardsInput>({
-    mutationFn: async ({ card_ids }) => {
+    mutationFn: async ({ updates }) => {
+      if (updates.length === 0) return;
       await Promise.all(
-        card_ids.map((id, index) =>
-          supabase.from('cards').update({ position: index }).eq('id', id),
+        updates.map(({ card_id, position }) =>
+          supabase.from('cards').update({ position }).eq('id', card_id),
         ),
       );
     },
     onSuccess: (_data, input) => {
-      trackEvent('cards_reordered', { page_id: input.page_id, count: input.card_ids.length });
+      trackEvent('cards_reordered', { page_id: input.page_id, count: input.updates.length });
       queryClient.invalidateQueries({ queryKey: cardsForPageQueryKey(input.page_id) });
       queryClient.invalidateQueries({ queryKey: cardsForBinderQueryKey(input.binder_id) });
     },

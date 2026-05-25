@@ -39,11 +39,16 @@ export function useCreateCard() {
         .single();
       if (pageError) throw pageError;
 
-      // Compute next position within the page.
-      const { count } = await supabase
+      // Compute next position — append after the highest existing slot so
+      // gaps from drag-rearrange aren't auto-filled by new cards.
+      const { data: lastCard } = await supabase
         .from('cards')
-        .select('id', { count: 'exact', head: true })
-        .eq('page_id', input.page_id);
+        .select('position')
+        .eq('page_id', input.page_id)
+        .order('position', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      const nextPosition = lastCard ? lastCard.position + 1 : 0;
 
       const { data: card, error } = await supabase
         .from('cards')
@@ -59,7 +64,7 @@ export function useCreateCard() {
           condition: input.condition ?? null,
           notes: input.notes ?? null,
           tcg_card_id: input.tcg_card_id ?? null,
-          position: count ?? 0,
+          position: nextPosition,
         })
         .select('*')
         .single();

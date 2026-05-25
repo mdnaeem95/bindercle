@@ -11,14 +11,14 @@ type CardLayoutProps = {
 
 /**
  * Renders the cards on a page as a real binder spread — 4 / 9 / 16 pockets
- * per spread depending on the layout. Pockets are visible (dashed border,
- * fixed aspect) so empty slots look like waiting-to-be-filled binder pockets,
- * not missing UI.
+ * per spread. Pockets are visible (dashed border, fixed aspect) so empty
+ * slots look like waiting-to-be-filled binder pockets, not missing UI.
  *
- * Cards fill row-major (left → right, then wrap top → bottom). When there
- * are more cards than pockets-per-spread, they roll over onto additional
- * spreads stacked vertically — same pattern as flipping the next page in a
- * physical binder.
+ * Cards are positioned by their explicit `position` field. Gaps are valid —
+ * a card at position 0 with the next at position 4 shows slots 1, 2, 3 as
+ * empty pockets in between. When more cards exist than fit in one spread,
+ * they roll over onto additional spreads stacked vertically, same as
+ * flipping the next page in a physical binder.
  */
 export function CardLayout({ layout, cards, onCardPress }: CardLayoutProps) {
   const columns = BINDER_LAYOUT_COLUMNS[layout];
@@ -45,25 +45,24 @@ function PocketSpreads({
   onCardPress: (id: string) => void;
 }) {
   const theme = useTheme();
-  // Width % per pocket, with a small gap between them. (`gap` ≈ 2% of row.)
   const pocketWidthPct = (100 - (columns - 1) * 2) / columns;
   const pocketWidth = `${pocketWidthPct}%` as const;
 
-  // Chunk cards into spreads — each spread is one "binder page worth" of pockets.
-  const spreads: CardWithExtras[][] = [];
-  if (cards.length === 0) {
-    spreads.push([]);
-  } else {
-    for (let i = 0; i < cards.length; i += slotsPerSpread) {
-      spreads.push(cards.slice(i, i + slotsPerSpread));
-    }
+  const cardByPosition = new Map<number, CardWithExtras>();
+  let maxPosition = -1;
+  for (const c of cards) {
+    cardByPosition.set(c.position, c);
+    if (c.position > maxPosition) maxPosition = c.position;
   }
+
+  const spreadCount = maxPosition < 0 ? 1 : Math.floor(maxPosition / slotsPerSpread) + 1;
 
   return (
     <View style={{ gap: 16 }}>
-      {spreads.map((spread, spreadIdx) => (
+      {Array.from({ length: spreadCount }).map((_, spreadIdx) => (
         <View
-          key={`spread-${spreadIdx}-${spread[0]?.id ?? spreadIdx}`}
+          // biome-ignore lint/suspicious/noArrayIndexKey: fixed-length skeleton, spreads never reorder
+          key={`spread-${spreadIdx}`}
           style={{
             padding: 12,
             borderRadius: 16,
@@ -74,10 +73,11 @@ function PocketSpreads({
         >
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
             {Array.from({ length: slotsPerSpread }).map((_, slotIdx) => {
-              const card = spread[slotIdx];
+              const position = spreadIdx * slotsPerSpread + slotIdx;
+              const card = cardByPosition.get(position);
               return (
                 <View
-                  key={card?.id ?? `slot-${spreadIdx}-${slotIdx}`}
+                  key={card?.id ?? `slot-${position}`}
                   style={{
                     width: pocketWidth,
                     aspectRatio: 63 / 88,

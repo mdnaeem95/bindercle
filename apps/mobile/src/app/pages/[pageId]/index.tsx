@@ -1,5 +1,5 @@
+import { BinderPageGrid } from '@/components/BinderPageGrid';
 import { CardLayout } from '@/components/CardLayout';
-import { DraggableGrid } from '@/components/DraggableGrid';
 import { useBinder } from '@/hooks/useBinder';
 import { type CardWithExtras, useCardsForBinder } from '@/hooks/useCards';
 import { type PageWithCount, usePage, usePagesForBinder } from '@/hooks/usePages';
@@ -13,7 +13,6 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Alert,
   FlatList,
-  Image,
   type LayoutChangeEvent,
   type NativeScrollEvent,
   type NativeSyntheticEvent,
@@ -80,14 +79,16 @@ export default function PageDetailScreen() {
     if (!currentPage) return;
     const original = cardsByPage.get(currentPage.id) ?? [];
     setReorganizing(false);
-    const changed =
-      draftCards.length !== original.length || draftCards.some((c, i) => c.id !== original[i]?.id);
-    if (!changed) return;
+    const originalPositions = new Map(original.map((c) => [c.id, c.position]));
+    const updates = draftCards
+      .filter((c) => originalPositions.get(c.id) !== c.position)
+      .map((c) => ({ card_id: c.id, position: c.position }));
+    if (updates.length === 0) return;
     try {
       await reorderCards.mutateAsync({
         page_id: currentPage.id,
         binder_id: currentPage.binder_id,
-        card_ids: draftCards.map((c) => c.id),
+        updates,
       });
     } catch (e) {
       const err = e as { message?: string };
@@ -95,10 +96,13 @@ export default function PageDetailScreen() {
     }
   };
 
-  const handleOrderChange = (orderedIds: string[]) => {
-    const byId = new Map(draftCards.map((c) => [c.id, c]));
-    const next = orderedIds.map((id) => byId.get(id)).filter((c): c is CardWithExtras => !!c);
-    setDraftCards(next);
+  const handlePositionsChange = (positions: Record<string, number>) => {
+    setDraftCards((prev) =>
+      prev.map((c) => {
+        const next = positions[c.id];
+        return next === undefined ? c : { ...c, position: next };
+      }),
+    );
   };
 
   const onGridLayout = (e: LayoutChangeEvent) => {
@@ -203,7 +207,7 @@ export default function PageDetailScreen() {
                   draftCards={isActive ? draftCards : pageCards}
                   gridWidth={gridWidth}
                   onGridLayout={onGridLayout}
-                  onOrderChange={handleOrderChange}
+                  onPositionsChange={handlePositionsChange}
                   onEnterReorganize={enterReorganize}
                 />
               );
@@ -225,7 +229,7 @@ type PageBodyProps = {
   draftCards: CardWithExtras[];
   gridWidth: number;
   onGridLayout: (e: LayoutChangeEvent) => void;
-  onOrderChange: (ids: string[]) => void;
+  onPositionsChange: (positions: Record<string, number>) => void;
   onEnterReorganize: () => void;
 };
 
@@ -239,7 +243,7 @@ function PageBody({
   draftCards,
   gridWidth,
   onGridLayout,
-  onOrderChange,
+  onPositionsChange,
   onEnterReorganize,
 }: PageBodyProps) {
   const theme = useTheme();
@@ -253,27 +257,15 @@ function PageBody({
         contentContainerStyle={{ padding: 16, paddingBottom: insets.bottom + 24 }}
       >
         <Text variant="bodySmall" tone="secondary" align="center" style={{ marginBottom: 16 }}>
-          Long-press a card, then drag to rearrange
+          Long-press a card, then drag to any pocket. Drop on an occupied slot to swap.
         </Text>
         <View onLayout={onGridLayout}>
           {gridWidth > 0 && (
-            <DraggableGrid
-              items={draftCards}
-              keyExtractor={(c) => c.id}
+            <BinderPageGrid
+              layout={binderLayout}
+              cards={draftCards}
               containerWidth={gridWidth}
-              onOrderChange={onOrderChange}
-              renderItem={(c) => {
-                const photoUrl = c.photos[0]?.url ?? c.tcg_card?.image_small ?? null;
-                return photoUrl ? (
-                  <Image
-                    source={{ uri: photoUrl }}
-                    style={{ width: '100%', height: '100%' }}
-                    resizeMode="cover"
-                  />
-                ) : (
-                  <View style={{ flex: 1, backgroundColor: theme.colors.bgElevated2 }} />
-                );
-              }}
+              onPositionsChange={onPositionsChange}
             />
           )}
         </View>
@@ -292,7 +284,7 @@ function PageBody({
     >
       {isOwner && (
         <View style={{ flexDirection: 'row', justifyContent: 'flex-end', gap: 8 }}>
-          {cardCount > 1 && (
+          {cardCount >= 1 && (
             <Button variant="ghost" size="sm" onPress={onEnterReorganize}>
               Reorganize
             </Button>
