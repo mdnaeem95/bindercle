@@ -68,7 +68,7 @@ export default function SignInScreen() {
         <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', gap: 16 }}>
           <BindercleWordmark size={64} />
           <Text variant="display2" tone="secondary" align="center">
-            show off your cute collection
+            show off your collection
           </Text>
         </View>
 
