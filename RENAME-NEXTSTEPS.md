@@ -68,8 +68,8 @@ eas build --platform ios --profile development
 ```
 
 After install:
-- [ ] Old dev client (Foilio icon) — delete from device
-- [ ] New dev client (Bindercle icon) — install via TestFlight link or
+- [Y] Old dev client (Foilio icon) — delete from device
+- [Y] New dev client (Bindercle icon) — install via TestFlight link or
       camera-scan QR from `eas build` output
 
 ---
@@ -80,9 +80,9 @@ Apple Sign In ID tokens are scoped to the bundle ID's audience. Existing
 sign-ins from the old `app.foilio.mobile` bundle won't validate against
 the new bundle. On the new dev client:
 
-- [ ] Sign out of your existing dev accounts (or just sign in fresh — the
+- [Y] Sign out of your existing dev accounts (or just sign in fresh — the
       old session will be invalid and you'll be redirected to sign-in)
-- [ ] You may also want to delete the prior `naeemsani95@...` /
+- [Y] You may also want to delete the prior `naeemsani95@...` /
       `muhdnaeem95@...` rows from `auth.users` in Supabase if they're
       tied to the old Apple identifier and you don't need them. The
       `useDeleteAccount` flow in the app does this cleanly, OR you can
@@ -96,16 +96,16 @@ These are NOT user-facing and don't affect functionality. They're left
 alone in this rename for surgical scope. Worth doing as a separate pass
 when you feel like it:
 
-- [ ] Monorepo workspace names: `@foilio/mobile`, `@foilio/ui`,
+- [Y] Monorepo workspace names: `@foilio/mobile`, `@foilio/ui`,
       `@foilio/api-client` → `@bindercle/...`. Lots of import sites.
-- [ ] Function names: `useFoilioFonts`, `createFoilioClient`
-- [ ] File-level comments in `apps/mobile/src/lib/*` and migrations
+- [Y] Function names: `useFoilioFonts`, `createFoilioClient`
+- [Y] File-level comments in `apps/mobile/src/lib/*` and migrations
       (cosmetic, the SQL still runs)
-- [ ] Supabase project name (in dashboard) — purely cosmetic; the URL
+- [Y] Supabase project name (in dashboard) — purely cosmetic; the URL
       stays the same
-- [ ] Sentry / PostHog project names — keep for data continuity unless
+- [Y] Sentry / PostHog project names — keep for data continuity unless
       you specifically want a fresh start
-- [ ] GitHub repo name — `gh repo rename bindercle` once you're sure
+- [Y] GitHub repo name — `gh repo rename bindercle` once you're sure
 
 ---
 

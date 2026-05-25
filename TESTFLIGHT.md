@@ -9,16 +9,16 @@ submissions are mostly `pnpm mobile eas build && eas submit`.
 ## 1. Pre-flight checks (one-time)
 
 ### Apple Developer account
-- [ ] Active Apple Developer Program membership ($99/yr).
-- [ ] Bundle ID `app.bindercle.mobile` registered at
+- [Y] Active Apple Developer Program membership ($99/yr).
+- [Y] Bundle ID `app.bindercle.mobile` registered at
       <https://developer.apple.com/account/resources/identifiers/list>
       with **Sign In with Apple** capability enabled.
 
 ### App Store Connect record
-- [ ] Create a new app at <https://appstoreconnect.apple.com> → My Apps → "+".
-- [ ] Platform: iOS. Name: **Bindercle**. Bundle ID: `app.bindercle.mobile`.
+- [Y] Create a new app at <https://appstoreconnect.apple.com> → My Apps → "+".
+- [Y] Platform: iOS. Name: **Bindercle**. Bundle ID: `app.bindercle.mobile`.
       SKU: anything (e.g. `bindercle-mobile-1`). Primary language: English.
-- [ ] After creation, grab the **Apple ID** (a numeric ID, sometimes
+- [Y] After creation, grab the **Apple ID** (a numeric ID, sometimes
       called "ascAppId") from App Information. Save it for later if you
       want fully non-interactive submits.
 
@@ -26,10 +26,10 @@ submissions are mostly `pnpm mobile eas build && eas submit`.
 You can build + submit to TestFlight **internal** testing without these,
 but external testers (or App Store release) need them.
 
-- [ ] **Privacy Policy URL** — host one. Replace `https://bindercle.app/privacy`
+- [Y] **Privacy Policy URL** — host one. Replace `https://bindercle.app/privacy`
       in `apps/mobile/src/app/settings.tsx`.
-- [ ] **Terms of Service URL** — same. Replace `https://bindercle.app/terms`.
-- [ ] **Support URL / email** — `mailto:pika@bindercle.app` is the current
+- [Y] **Terms of Service URL** — same. Replace `      `.
+- [Y] **Support URL / email** — `mailto:pika@bindercle.app` is the current
       placeholder.
 - [ ] **App description** — written copy for the App Store listing.
 - [ ] **Keywords** (≤100 chars) — comma-separated.
