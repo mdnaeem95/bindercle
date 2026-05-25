@@ -47,7 +47,6 @@
         }
       ],
       "expo-secure-store",
-      "@sentry/react-native",
       [
         "expo-image-picker",
         {

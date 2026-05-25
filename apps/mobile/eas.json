@@ -52,10 +52,7 @@
         "resourceClass": "m-medium"
       },
       "env": {
-        "EXPO_PUBLIC_ENV": "production",
-        "SENTRY_ORG": "naeem-th",
-        "SENTRY_PROJECT": "foilio",
-        "SENTRY_DISABLE_AUTO_UPLOAD": "true"
+        "EXPO_PUBLIC_ENV": "production"
       }
     }
   },
