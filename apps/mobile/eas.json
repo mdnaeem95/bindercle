@@ -14,6 +14,12 @@
       },
       "env": {
         "EXPO_PUBLIC_ENV": "development",
+        "EXPO_PUBLIC_SUPABASE_URL": "https://rdrtxmhjfikzkfwzdqpr.supabase.co",
+        "EXPO_PUBLIC_SUPABASE_ANON_KEY": "sb_publishable_nJ7rA_oP3eSqiRrd2lapWQ_XcMBrwj3",
+        "EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID": "96556832310-5oqo7sd6olb5rfbckkg0rcenpahibcu4.apps.googleusercontent.com",
+        "EXPO_PUBLIC_SENTRY_DSN": "https://d4b1b10168e0263aaeb8326ae90d7c6f@o4507860915257344.ingest.us.sentry.io/4511434332569600",
+        "EXPO_PUBLIC_POSTHOG_API_KEY": "phc_yGEWVb2WYaVhpiAHokrMPX4q9QLdxiU9pbjsWorhkmDr",
+        "EXPO_PUBLIC_POSTHOG_HOST": "https://eu.i.posthog.com",
         "SENTRY_DISABLE_AUTO_UPLOAD": "true"
       }
     },
@@ -27,6 +33,12 @@
       },
       "env": {
         "EXPO_PUBLIC_ENV": "development",
+        "EXPO_PUBLIC_SUPABASE_URL": "https://rdrtxmhjfikzkfwzdqpr.supabase.co",
+        "EXPO_PUBLIC_SUPABASE_ANON_KEY": "sb_publishable_nJ7rA_oP3eSqiRrd2lapWQ_XcMBrwj3",
+        "EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID": "96556832310-5oqo7sd6olb5rfbckkg0rcenpahibcu4.apps.googleusercontent.com",
+        "EXPO_PUBLIC_SENTRY_DSN": "https://d4b1b10168e0263aaeb8326ae90d7c6f@o4507860915257344.ingest.us.sentry.io/4511434332569600",
+        "EXPO_PUBLIC_POSTHOG_API_KEY": "phc_yGEWVb2WYaVhpiAHokrMPX4q9QLdxiU9pbjsWorhkmDr",
+        "EXPO_PUBLIC_POSTHOG_HOST": "https://eu.i.posthog.com",
         "SENTRY_DISABLE_AUTO_UPLOAD": "true"
       }
     },
@@ -42,6 +54,12 @@
       },
       "env": {
         "EXPO_PUBLIC_ENV": "preview",
+        "EXPO_PUBLIC_SUPABASE_URL": "https://rdrtxmhjfikzkfwzdqpr.supabase.co",
+        "EXPO_PUBLIC_SUPABASE_ANON_KEY": "sb_publishable_nJ7rA_oP3eSqiRrd2lapWQ_XcMBrwj3",
+        "EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID": "96556832310-5oqo7sd6olb5rfbckkg0rcenpahibcu4.apps.googleusercontent.com",
+        "EXPO_PUBLIC_SENTRY_DSN": "https://d4b1b10168e0263aaeb8326ae90d7c6f@o4507860915257344.ingest.us.sentry.io/4511434332569600",
+        "EXPO_PUBLIC_POSTHOG_API_KEY": "phc_yGEWVb2WYaVhpiAHokrMPX4q9QLdxiU9pbjsWorhkmDr",
+        "EXPO_PUBLIC_POSTHOG_HOST": "https://eu.i.posthog.com",
         "SENTRY_DISABLE_AUTO_UPLOAD": "true"
       }
     },
@@ -53,6 +71,12 @@
       },
       "env": {
         "EXPO_PUBLIC_ENV": "production",
+        "EXPO_PUBLIC_SUPABASE_URL": "https://rdrtxmhjfikzkfwzdqpr.supabase.co",
+        "EXPO_PUBLIC_SUPABASE_ANON_KEY": "sb_publishable_nJ7rA_oP3eSqiRrd2lapWQ_XcMBrwj3",
+        "EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID": "96556832310-5oqo7sd6olb5rfbckkg0rcenpahibcu4.apps.googleusercontent.com",
+        "EXPO_PUBLIC_SENTRY_DSN": "https://d4b1b10168e0263aaeb8326ae90d7c6f@o4507860915257344.ingest.us.sentry.io/4511434332569600",
+        "EXPO_PUBLIC_POSTHOG_API_KEY": "phc_yGEWVb2WYaVhpiAHokrMPX4q9QLdxiU9pbjsWorhkmDr",
+        "EXPO_PUBLIC_POSTHOG_HOST": "https://eu.i.posthog.com",
         "SENTRY_ORG": "naeem-th",
         "SENTRY_PROJECT": "foilio",
         "SENTRY_DISABLE_AUTO_UPLOAD": "true"
