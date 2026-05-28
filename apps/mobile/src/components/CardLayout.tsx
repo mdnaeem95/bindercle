@@ -45,8 +45,6 @@ function PocketSpreads({
   onCardPress: (id: string) => void;
 }) {
   const theme = useTheme();
-  const pocketWidthPct = (100 - (columns - 1) * 2) / columns;
-  const pocketWidth = `${pocketWidthPct}%` as const;
 
   const cardByPosition = new Map<number, CardWithExtras>();
   let maxPosition = -1;
@@ -56,6 +54,7 @@ function PocketSpreads({
   }
 
   const spreadCount = maxPosition < 0 ? 1 : Math.floor(maxPosition / slotsPerSpread) + 1;
+  const rowsPerSpread = Math.ceil(slotsPerSpread / columns);
 
   return (
     <View style={{ gap: 16 }}>
@@ -69,40 +68,48 @@ function PocketSpreads({
             backgroundColor: theme.colors.bgElevated1,
             borderWidth: 1,
             borderColor: theme.colors.borderSubtle,
+            gap: 6,
           }}
         >
-          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
-            {Array.from({ length: slotsPerSpread }).map((_, slotIdx) => {
-              const position = spreadIdx * slotsPerSpread + slotIdx;
-              const card = cardByPosition.get(position);
-              return (
-                <View
-                  key={card?.id ?? `slot-${position}`}
-                  style={{
-                    width: pocketWidth,
-                    aspectRatio: 63 / 88,
-                    borderRadius: 8,
-                    borderWidth: 1,
-                    borderStyle: 'dashed',
-                    borderColor: theme.colors.borderSubtle,
-                    backgroundColor: theme.colors.bgBase,
-                    overflow: 'hidden',
-                  }}
-                >
-                  {card && (
-                    <CardThumbnail
-                      name={card.name}
-                      photoUrl={card.photos[0]?.url ?? card.tcg_card?.image_small ?? null}
-                      photoCount={card.photos.length}
-                      caption={card.caption}
-                      onPress={() => onCardPress(card.id)}
-                      style={{ width: '100%', height: '100%' }}
-                    />
-                  )}
-                </View>
-              );
-            })}
-          </View>
+          {Array.from({ length: rowsPerSpread }).map((_, rowIdx) => (
+            <View
+              // biome-ignore lint/suspicious/noArrayIndexKey: fixed-length skeleton, rows never reorder
+              key={`row-${spreadIdx}-${rowIdx}`}
+              style={{ flexDirection: 'row', gap: 6 }}
+            >
+              {Array.from({ length: columns }).map((_, colIdx) => {
+                const slotIdx = rowIdx * columns + colIdx;
+                const position = spreadIdx * slotsPerSpread + slotIdx;
+                const card = cardByPosition.get(position);
+                return (
+                  <View
+                    key={card?.id ?? `slot-${position}`}
+                    style={{
+                      flex: 1,
+                      aspectRatio: 63 / 88,
+                      borderRadius: 8,
+                      borderWidth: 1,
+                      borderStyle: 'dashed',
+                      borderColor: theme.colors.borderSubtle,
+                      backgroundColor: theme.colors.bgBase,
+                      overflow: 'hidden',
+                    }}
+                  >
+                    {card && (
+                      <CardThumbnail
+                        name={card.name}
+                        photoUrl={card.photos[0]?.url ?? card.tcg_card?.image_small ?? null}
+                        photoCount={card.photos.length}
+                        caption={card.caption}
+                        onPress={() => onCardPress(card.id)}
+                        style={{ width: '100%', height: '100%' }}
+                      />
+                    )}
+                  </View>
+                );
+              })}
+            </View>
+          ))}
         </View>
       ))}
     </View>
