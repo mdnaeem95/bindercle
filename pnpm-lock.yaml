@@ -85,9 +85,6 @@ importers:
       expo-crypto:
         specifier: ~56.0.3
         version: 56.0.3(expo@56.0.3)
-      expo-dev-client:
-        specifier: ~56.0.14
-        version: 56.0.14(expo@56.0.3)(react-native@0.85.3(@babel/core@7.29.0)(@react-native/metro-config@0.85.3(@babel/core@7.29.0))(@types/react@19.2.15)(react@19.2.3))
       expo-device:
         specifier: ~56.0.4
         version: 56.0.4(expo@56.0.3)
@@ -182,6 +179,9 @@ importers:
       '@types/react':
         specifier: ~19.2.2
         version: 19.2.15
+      expo-dev-client:
+        specifier: ~56.0.14
+        version: 56.0.14(expo@56.0.3)(react-native@0.85.3(@babel/core@7.29.0)(@react-native/metro-config@0.85.3(@babel/core@7.29.0))(@types/react@19.2.15)(react@19.2.3))
       typescript:
         specifier: ~6.0.3
         version: 6.0.3
