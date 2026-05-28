@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#2A1F30" />
+      <stop offset="100%" stop-color="#0A0A0F" />
+    </linearGradient>
+    <style type="text/css">
+      @import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@1&amp;display=swap');
+      .glyph {
+        font-family: 'Instrument Serif', 'Cormorant Garamond', 'EB Garamond', Georgia, serif;
+        font-style: italic;
+        font-weight: 400;
+        font-size: 820px;
+        fill: #F4E8D8;
+      }
+    </style>
+  </defs>
+
+  <!-- Background — vertical gradient, deep aubergine fading to near-black -->
+  <rect width="1024" height="1024" fill="url(#bgGrad)" />
+
+  <!-- Letter "b" — lowercase, Instrument Serif italic, optically centered -->
+  <text
+    x="512"
+    y="512"
+    text-anchor="middle"
+    dominant-baseline="central"
+    class="glyph">b</text>
+</svg>
