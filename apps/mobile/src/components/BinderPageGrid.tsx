@@ -1,13 +1,16 @@
 import type { CardWithExtras } from '@/hooks/useCards';
 import { BINDER_LAYOUT_COLUMNS, type BinderLayout } from '@/lib/validators/binder';
-import { useTheme } from '@foilio/ui';
+import { Text, useTheme } from '@foilio/ui';
+import { Trash2 } from 'lucide-react-native';
 import { useEffect } from 'react';
 import { Image, View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
   cancelAnimation,
+  measure,
   runOnJS,
   type SharedValue,
+  useAnimatedRef,
   useAnimatedStyle,
   useSharedValue,
   withDelay,
@@ -19,6 +22,7 @@ import Animated, {
 const POCKET_GAP = 6;
 const SPREAD_PADDING = 12;
 const CARD_ASPECT = 63 / 88;
+const TRASH_ZONE_HEIGHT = 72;
 
 type PositionsMap = Record<string, number>;
 
@@ -27,6 +31,8 @@ type Props = {
   cards: CardWithExtras[];
   containerWidth: number;
   onPositionsChange: (positions: PositionsMap) => void;
+  /** Called with the card id when the user drops a card on the trash zone. */
+  onDeleteCard?: (cardId: string) => void;
 };
 
 /**
@@ -41,7 +47,13 @@ type Props = {
  * Cross-spread drag is intentionally out of scope; the target slot
  * is clamped to the spread the drag started in.
  */
-export function BinderPageGrid({ layout, cards, containerWidth, onPositionsChange }: Props) {
+export function BinderPageGrid({
+  layout,
+  cards,
+  containerWidth,
+  onPositionsChange,
+  onDeleteCard,
+}: Props) {
   const theme = useTheme();
   const columns = BINDER_LAYOUT_COLUMNS[layout];
   const slotsPerSpread = columns * columns;
@@ -71,6 +83,19 @@ export function BinderPageGrid({ layout, cards, containerWidth, onPositionsChang
   const commit = (next: PositionsMap) => {
     onPositionsChange(next);
   };
+
+  // Trash zone — measured from the worklet so we can compare against the
+  // gesture's absoluteY without bridging through JS.
+  const trashRef = useAnimatedRef<Animated.View>();
+  const isOverTrash = useSharedValue(false);
+  const isAnyDragging = useSharedValue(false);
+
+  const trashStyle = useAnimatedStyle(() => ({
+    backgroundColor: isOverTrash.value ? 'rgba(239, 68, 68, 0.18)' : 'transparent',
+    borderColor: isOverTrash.value ? '#EF4444' : theme.colors.borderSubtle,
+    transform: [{ scale: withSpring(isOverTrash.value ? 1.04 : 1) }],
+    opacity: withTiming(isAnyDragging.value ? 1 : 0.5, { duration: 160 }),
+  }));
 
   return (
     <View style={{ gap: 16 }}>
@@ -123,12 +148,40 @@ export function BinderPageGrid({ layout, cards, containerWidth, onPositionsChang
                   cellWidth={cellWidth}
                   cellHeight={cellHeight}
                   commit={commit}
+                  trashRef={trashRef}
+                  isOverTrash={isOverTrash}
+                  isAnyDragging={isAnyDragging}
+                  onDeleteCard={onDeleteCard}
                 />
               ))}
             </View>
           </View>
         );
       })}
+
+      {onDeleteCard && (
+        <Animated.View
+          ref={trashRef}
+          style={[
+            {
+              height: TRASH_ZONE_HEIGHT,
+              borderRadius: 16,
+              borderWidth: 1,
+              borderStyle: 'dashed',
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexDirection: 'row',
+              gap: 8,
+            },
+            trashStyle,
+          ]}
+        >
+          <Trash2 size={18} color={theme.colors.textTertiary} strokeWidth={1.8} />
+          <Text variant="caption" tone="tertiary">
+            Drop here to delete
+          </Text>
+        </Animated.View>
+      )}
     </View>
   );
 }
@@ -174,6 +227,10 @@ type DraggableCardProps = {
   cellWidth: number;
   cellHeight: number;
   commit: (positions: PositionsMap) => void;
+  trashRef: ReturnType<typeof useAnimatedRef<Animated.View>>;
+  isOverTrash: SharedValue<boolean>;
+  isAnyDragging: SharedValue<boolean>;
+  onDeleteCard?: (cardId: string) => void;
 };
 
 function DraggableCard({
@@ -185,6 +242,10 @@ function DraggableCard({
   cellWidth,
   cellHeight,
   commit,
+  trashRef,
+  isOverTrash,
+  isAnyDragging,
+  onDeleteCard,
 }: DraggableCardProps) {
   const theme = useTheme();
   const id = card.id;
@@ -244,33 +305,69 @@ function DraggableCard({
     };
   });
 
+  const fireDelete = (cardId: string) => {
+    onDeleteCard?.(cardId);
+  };
+
   const pan = Gesture.Pan()
     .activateAfterLongPress(250)
     .onStart(() => {
       isDragging.value = true;
+      isAnyDragging.value = true;
     })
     .onUpdate((e) => {
       dragX.value = e.translationX;
       dragY.value = e.translationY;
+
+      // Highlight the trash if the touch is currently inside its bounds.
+      const trashBounds = measure(trashRef);
+      if (trashBounds) {
+        const insideTrash =
+          e.absoluteY >= trashBounds.pageY &&
+          e.absoluteY <= trashBounds.pageY + trashBounds.height &&
+          e.absoluteX >= trashBounds.pageX &&
+          e.absoluteX <= trashBounds.pageX + trashBounds.width;
+        isOverTrash.value = insideTrash;
+      }
     })
-    .onEnd(() => {
+    .onEnd((e) => {
+      // Capture drag translation BEFORE resetting shared values, since the
+      // slot-swap target math below depends on it.
+      const finalDragX = dragX.value;
+      const finalDragY = dragY.value;
+
+      const trashBounds = measure(trashRef);
+      const droppedOnTrash =
+        !!trashBounds &&
+        e.absoluteY >= trashBounds.pageY &&
+        e.absoluteY <= trashBounds.pageY + trashBounds.height &&
+        e.absoluteX >= trashBounds.pageX &&
+        e.absoluteX <= trashBounds.pageX + trashBounds.width;
+
+      isDragging.value = false;
+      isAnyDragging.value = false;
+      isOverTrash.value = false;
+      dragX.value = 0;
+      dragY.value = 0;
+
+      if (droppedOnTrash && onDeleteCard) {
+        runOnJS(fireDelete)(id);
+        return;
+      }
+
       const startPosition = positions.value[id] ?? card.position;
       const startSlot = startPosition - spreadOriginPosition;
       const startCol = startSlot % columns;
       const startRow = Math.floor(startSlot / columns);
 
-      const centerX = startCol * colStride + cellWidth / 2 + dragX.value;
-      const centerY = startRow * rowStride + cellHeight / 2 + dragY.value;
+      const centerX = startCol * colStride + cellWidth / 2 + finalDragX;
+      const centerY = startRow * rowStride + cellHeight / 2 + finalDragY;
 
       const targetCol = Math.max(0, Math.min(columns - 1, Math.floor(centerX / colStride)));
       const rowsPerSpread = Math.ceil(slotsPerSpread / columns);
       const targetRow = Math.max(0, Math.min(rowsPerSpread - 1, Math.floor(centerY / rowStride)));
       const targetSlot = targetRow * columns + targetCol;
       const targetPosition = spreadOriginPosition + targetSlot;
-
-      isDragging.value = false;
-      dragX.value = 0;
-      dragY.value = 0;
 
       if (targetPosition === startPosition) return;
 

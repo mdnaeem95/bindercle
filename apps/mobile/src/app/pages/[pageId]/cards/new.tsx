@@ -32,7 +32,11 @@ const PHOTO_LIMIT = 6;
 export default function NewCardScreen() {
   const theme = useTheme();
   const insets = useSafeAreaInsets();
-  const { pageId } = useLocalSearchParams<{ pageId: string }>();
+  const { pageId, position: positionParam } = useLocalSearchParams<{
+    pageId: string;
+    position?: string;
+  }>();
+  const targetPosition = positionParam ? Number.parseInt(positionParam, 10) : undefined;
   const createCard = useCreateCard();
   const [photos, setPhotos] = useState<string[]>([]);
   const [tcgCardId, setTcgCardId] = useState<string | null>(null);
@@ -139,7 +143,7 @@ export default function NewCardScreen() {
   const onSubmit = async (values: CardFormValues) => {
     if (!pageId) return;
     try {
-      const card = await createCard.mutateAsync({
+      await createCard.mutateAsync({
         page_id: pageId,
         name: values.name,
         caption: values.caption?.trim() || null,
@@ -150,8 +154,9 @@ export default function NewCardScreen() {
         notes: values.notes?.trim() || null,
         tcg_card_id: tcgCardId,
         photo_uris: photos,
+        position: targetPosition,
       });
-      router.replace(`/cards/${card.id}`);
+      router.replace(`/pages/${pageId}`);
     } catch (e) {
       const err = e as { message?: string };
       Alert.alert('Could not save card', err.message ?? 'Try again.');

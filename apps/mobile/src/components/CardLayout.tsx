@@ -1,12 +1,15 @@
 import type { CardWithExtras } from '@/hooks/useCards';
 import { BINDER_LAYOUT_COLUMNS, type BinderLayout } from '@/lib/validators/binder';
 import { CardThumbnail, useTheme } from '@foilio/ui';
-import { View } from 'react-native';
+import { Plus } from 'lucide-react-native';
+import { Pressable, View } from 'react-native';
 
 type CardLayoutProps = {
   layout: BinderLayout;
   cards: CardWithExtras[];
   onCardPress: (cardId: string) => void;
+  /** When provided, empty pockets become tap targets that call this with the slot index. */
+  onEmptySlotPress?: (position: number) => void;
 };
 
 /**
@@ -19,8 +22,12 @@ type CardLayoutProps = {
  * empty pockets in between. When more cards exist than fit in one spread,
  * they roll over onto additional spreads stacked vertically, same as
  * flipping the next page in a physical binder.
+ *
+ * `onEmptySlotPress` (when supplied) is fired with the slot's absolute
+ * position whenever the owner taps an empty pocket — that's the primary
+ * add-card affordance.
  */
-export function CardLayout({ layout, cards, onCardPress }: CardLayoutProps) {
+export function CardLayout({ layout, cards, onCardPress, onEmptySlotPress }: CardLayoutProps) {
   const columns = BINDER_LAYOUT_COLUMNS[layout];
   const slotsPerSpread = columns * columns;
   return (
@@ -29,6 +36,7 @@ export function CardLayout({ layout, cards, onCardPress }: CardLayoutProps) {
       columns={columns}
       slotsPerSpread={slotsPerSpread}
       onCardPress={onCardPress}
+      onEmptySlotPress={onEmptySlotPress}
     />
   );
 }
@@ -38,11 +46,13 @@ function PocketSpreads({
   columns,
   slotsPerSpread,
   onCardPress,
+  onEmptySlotPress,
 }: {
   cards: CardWithExtras[];
   columns: number;
   slotsPerSpread: number;
   onCardPress: (id: string) => void;
+  onEmptySlotPress?: (position: number) => void;
 }) {
   const theme = useTheme();
 
@@ -81,21 +91,20 @@ function PocketSpreads({
                 const slotIdx = rowIdx * columns + colIdx;
                 const position = spreadIdx * slotsPerSpread + slotIdx;
                 const card = cardByPosition.get(position);
-                return (
-                  <View
-                    key={card?.id ?? `slot-${position}`}
-                    style={{
-                      flex: 1,
-                      aspectRatio: 63 / 88,
-                      borderRadius: 8,
-                      borderWidth: 1,
-                      borderStyle: 'dashed',
-                      borderColor: theme.colors.borderSubtle,
-                      backgroundColor: theme.colors.bgBase,
-                      overflow: 'hidden',
-                    }}
-                  >
-                    {card && (
+                const slotStyle = {
+                  flex: 1,
+                  aspectRatio: 63 / 88,
+                  borderRadius: 8,
+                  borderWidth: 1,
+                  borderStyle: 'dashed' as const,
+                  borderColor: theme.colors.borderSubtle,
+                  backgroundColor: theme.colors.bgBase,
+                  overflow: 'hidden' as const,
+                };
+
+                if (card) {
+                  return (
+                    <View key={card.id} style={slotStyle}>
                       <CardThumbnail
                         name={card.name}
                         photoUrl={card.photos[0]?.url ?? card.tcg_card?.image_small ?? null}
@@ -104,9 +113,32 @@ function PocketSpreads({
                         onPress={() => onCardPress(card.id)}
                         style={{ width: '100%', height: '100%' }}
                       />
-                    )}
-                  </View>
-                );
+                    </View>
+                  );
+                }
+
+                if (onEmptySlotPress) {
+                  return (
+                    <Pressable
+                      key={`slot-${position}`}
+                      onPress={() => onEmptySlotPress(position)}
+                      style={({ pressed }) => [
+                        slotStyle,
+                        {
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          backgroundColor: pressed
+                            ? theme.colors.bgElevated2
+                            : slotStyle.backgroundColor,
+                        },
+                      ]}
+                    >
+                      <Plus size={20} color={theme.colors.textTertiary} strokeWidth={1.8} />
+                    </Pressable>
+                  );
+                }
+
+                return <View key={`slot-${position}`} style={slotStyle} />;
               })}
             </View>
           ))}

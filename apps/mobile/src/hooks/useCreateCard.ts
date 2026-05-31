@@ -21,6 +21,11 @@ interface CreateCardInput {
   notes?: string | null;
   tcg_card_id?: string | null;
   photo_uris: string[];
+  /**
+   * Explicit slot to drop the card into. If omitted, the card is appended after
+   * the highest existing position on the page.
+   */
+  position?: number;
 }
 
 export function useCreateCard() {
@@ -39,16 +44,22 @@ export function useCreateCard() {
         .single();
       if (pageError) throw pageError;
 
-      // Compute next position — append after the highest existing slot so
-      // gaps from drag-rearrange aren't auto-filled by new cards.
-      const { data: lastCard } = await supabase
-        .from('cards')
-        .select('position')
-        .eq('page_id', input.page_id)
-        .order('position', { ascending: false })
-        .limit(1)
-        .maybeSingle();
-      const nextPosition = lastCard ? lastCard.position + 1 : 0;
+      // Use the caller-provided slot when given (tap-empty-pocket flow);
+      // otherwise append after the highest existing slot so gaps from
+      // drag-rearrange aren't auto-filled by new cards.
+      let nextPosition: number;
+      if (input.position !== undefined) {
+        nextPosition = input.position;
+      } else {
+        const { data: lastCard } = await supabase
+          .from('cards')
+          .select('position')
+          .eq('page_id', input.page_id)
+          .order('position', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        nextPosition = lastCard ? lastCard.position + 1 : 0;
+      }
 
       const { data: card, error } = await supabase
         .from('cards')

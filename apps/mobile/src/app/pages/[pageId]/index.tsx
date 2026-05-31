@@ -2,13 +2,13 @@ import { BinderPageGrid } from '@/components/BinderPageGrid';
 import { CardLayout } from '@/components/CardLayout';
 import { useBinder } from '@/hooks/useBinder';
 import { type CardWithExtras, useCardsForBinder } from '@/hooks/useCards';
+import { useDeleteCard } from '@/hooks/useDeleteCard';
 import { type PageWithCount, usePage, usePagesForBinder } from '@/hooks/usePages';
 import { useReorderCards } from '@/hooks/useReorderCards';
 import type { BinderLayout } from '@/lib/validators/binder';
 import { useAuthStore } from '@/stores/auth';
 import { type AccentColor, Button, Surface, Text, accentSolid, useTheme } from '@foilio/ui';
 import { router, useLocalSearchParams } from 'expo-router';
-import { Sparkles } from 'lucide-react-native';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Alert,
@@ -34,6 +34,7 @@ export default function PageDetailScreen() {
   // user swipes between pages.
   const { data: allCards } = useCardsForBinder(initialPage?.binder_id);
   const reorderCards = useReorderCards();
+  const deleteCard = useDeleteCard();
   const viewerId = useAuthStore((s) => s.user?.id);
 
   const initialIndex = useMemo(() => {
@@ -103,6 +104,32 @@ export default function PageDetailScreen() {
         return next === undefined ? c : { ...c, position: next };
       }),
     );
+  };
+
+  const handleTrashCard = (cardId: string) => {
+    const card = draftCards.find((c) => c.id === cardId);
+    if (!card) return;
+    Alert.alert('Delete card?', `"${card.name}" will be permanently removed.`, [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Delete',
+        style: 'destructive',
+        onPress: () => {
+          setDraftCards((prev) => prev.filter((c) => c.id !== cardId));
+          deleteCard.mutate(
+            { id: card.id, binder_id: card.binder_id, page_id: card.page_id ?? undefined },
+            {
+              onError: (e) => {
+                Alert.alert("Couldn't delete", e.message ?? 'Try again.');
+                setDraftCards((prev) =>
+                  prev.some((c) => c.id === card.id) ? prev : [...prev, card],
+                );
+              },
+            },
+          );
+        },
+      },
+    ]);
   };
 
   const onGridLayout = (e: LayoutChangeEvent) => {
@@ -209,6 +236,7 @@ export default function PageDetailScreen() {
                   onGridLayout={onGridLayout}
                   onPositionsChange={handlePositionsChange}
                   onEnterReorganize={enterReorganize}
+                  onTrashCard={handleTrashCard}
                 />
               );
             }}
@@ -231,6 +259,7 @@ type PageBodyProps = {
   onGridLayout: (e: LayoutChangeEvent) => void;
   onPositionsChange: (positions: Record<string, number>) => void;
   onEnterReorganize: () => void;
+  onTrashCard: (cardId: string) => void;
 };
 
 function PageBody({
@@ -245,8 +274,8 @@ function PageBody({
   onGridLayout,
   onPositionsChange,
   onEnterReorganize,
+  onTrashCard,
 }: PageBodyProps) {
-  const theme = useTheme();
   const insets = useSafeAreaInsets();
   const cardCount = cards.length;
 
@@ -257,7 +286,7 @@ function PageBody({
         contentContainerStyle={{ padding: 16, paddingBottom: insets.bottom + 24 }}
       >
         <Text variant="bodySmall" tone="secondary" align="center" style={{ marginBottom: 16 }}>
-          Long-press a card, then drag to any pocket. Drop on an occupied slot to swap.
+          Long-press a card, then drag to any pocket to move or swap. Drop on the trash to delete.
         </Text>
         <View onLayout={onGridLayout}>
           {gridWidth > 0 && (
@@ -266,6 +295,7 @@ function PageBody({
               cards={draftCards}
               containerWidth={gridWidth}
               onPositionsChange={onPositionsChange}
+              onDeleteCard={onTrashCard}
             />
           )}
         </View>
@@ -282,50 +312,29 @@ function PageBody({
         gap: 12,
       }}
     >
-      {isOwner && (
+      {isOwner && cardCount >= 1 && (
         <View style={{ flexDirection: 'row', justifyContent: 'flex-end', gap: 8 }}>
-          {cardCount >= 1 && (
-            <Button variant="ghost" size="sm" onPress={onEnterReorganize}>
-              Reorganize
-            </Button>
-          )}
-          <Button
-            variant="secondary"
-            size="sm"
-            onPress={() => router.push(`/pages/${page.id}/cards/new`)}
-          >
-            + Add card
+          <Button variant="ghost" size="sm" onPress={onEnterReorganize}>
+            Reorganize
           </Button>
         </View>
       )}
 
-      {cardCount === 0 ? (
-        <View
-          style={{
-            marginTop: 8,
-            padding: 32,
-            alignItems: 'center',
-            gap: 12,
-            borderRadius: 16,
-            borderWidth: 1,
-            borderStyle: 'dashed',
-            borderColor: theme.colors.borderSubtle,
-          }}
-        >
-          <Sparkles size={32} color={theme.colors.textTertiary} strokeWidth={1.6} />
-          <Text variant="body" align="center">
-            Empty page, full potential
-          </Text>
-          <Text variant="caption" tone="secondary" align="center">
-            Add the first card to make this page yours.
-          </Text>
-        </View>
-      ) : (
-        <CardLayout
-          layout={binderLayout}
-          cards={cards}
-          onCardPress={(cardId) => router.push(`/cards/${cardId}`)}
-        />
+      <CardLayout
+        layout={binderLayout}
+        cards={cards}
+        onCardPress={(cardId) => router.push(`/cards/${cardId}`)}
+        onEmptySlotPress={
+          isOwner
+            ? (position) => router.push(`/pages/${page.id}/cards/new?position=${position}`)
+            : undefined
+        }
+      />
+
+      {cardCount === 0 && (
+        <Text variant="caption" tone="tertiary" align="center" style={{ marginTop: 4 }}>
+          Tap a pocket to add your first card.
+        </Text>
       )}
     </ScrollView>
   );

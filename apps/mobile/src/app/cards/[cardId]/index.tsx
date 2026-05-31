@@ -1,9 +1,11 @@
 import { useCard } from '@/hooks/useCards';
+import { PageFullError, useDuplicateCard } from '@/hooks/useDuplicateCard';
 import { CARD_CONDITION_LABELS, type CardCondition } from '@/lib/validators/card';
+import { useAuthStore } from '@/stores/auth';
 import { Surface, Text, useTheme } from '@foilio/ui';
 import { router, useLocalSearchParams } from 'expo-router';
 import { ArrowLeft, Camera } from 'lucide-react-native';
-import { Image, Pressable, ScrollView, View } from 'react-native';
+import { Alert, Image, Pressable, ScrollView, View } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function CardDetailScreen() {
@@ -11,6 +13,28 @@ export default function CardDetailScreen() {
   const insets = useSafeAreaInsets();
   const { cardId } = useLocalSearchParams<{ cardId: string }>();
   const { data: card, isLoading } = useCard(cardId);
+  const viewerId = useAuthStore((s) => s.user?.id);
+  const duplicateCard = useDuplicateCard();
+  const isOwner = !!card && viewerId === card.owner_id;
+
+  const onDuplicate = () => {
+    if (!card) return;
+    duplicateCard.mutate(
+      { source_card_id: card.id },
+      {
+        onSuccess: () => {
+          if (card.page_id) router.replace(`/pages/${card.page_id}`);
+        },
+        onError: (e) => {
+          if (e instanceof PageFullError) {
+            Alert.alert('Page is full', 'Create a new page to add another card.');
+          } else {
+            Alert.alert("Couldn't duplicate", e.message ?? 'Try again.');
+          }
+        },
+      },
+    );
+  };
 
   if (isLoading || !card) {
     return (
@@ -102,20 +126,40 @@ export default function CardDetailScreen() {
             >
               <ArrowLeft size={18} color="#F8F8F2" strokeWidth={2} />
             </Pressable>
-            <Pressable
-              onPress={() => router.push(`/cards/${card.id}/edit`)}
-              hitSlop={12}
-              style={{
-                backgroundColor: 'rgba(10,10,15,0.6)',
-                paddingHorizontal: 12,
-                paddingVertical: 8,
-                borderRadius: 9999,
-              }}
-            >
-              <Text variant="caption" style={{ color: '#F8F8F2' }}>
-                Edit
-              </Text>
-            </Pressable>
+            <View style={{ flexDirection: 'row', gap: 8 }}>
+              {isOwner && (
+                <Pressable
+                  onPress={onDuplicate}
+                  disabled={duplicateCard.isPending}
+                  hitSlop={12}
+                  style={{
+                    backgroundColor: 'rgba(10,10,15,0.6)',
+                    paddingHorizontal: 12,
+                    paddingVertical: 8,
+                    borderRadius: 9999,
+                    opacity: duplicateCard.isPending ? 0.5 : 1,
+                  }}
+                >
+                  <Text variant="caption" style={{ color: '#F8F8F2' }}>
+                    Duplicate
+                  </Text>
+                </Pressable>
+              )}
+              <Pressable
+                onPress={() => router.push(`/cards/${card.id}/edit`)}
+                hitSlop={12}
+                style={{
+                  backgroundColor: 'rgba(10,10,15,0.6)',
+                  paddingHorizontal: 12,
+                  paddingVertical: 8,
+                  borderRadius: 9999,
+                }}
+              >
+                <Text variant="caption" style={{ color: '#F8F8F2' }}>
+                  Edit
+                </Text>
+              </Pressable>
+            </View>
           </View>
         </SafeAreaView>
 
