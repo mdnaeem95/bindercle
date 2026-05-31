@@ -90,7 +90,7 @@ RLS on everything. Storage buckets for binder covers + card photos.
 
 - Build 14 approved, awaiting manual release on **2026-06-10**.
 - Launch day: coordinated TikTok/Bluesky/X posts, email waitlist via Resend, creator coordination per [bindercle-social-agent.md](bindercle-social-agent.md).
-- **No OTA hotfix path.** [apps/mobile/app.json](apps/mobile/app.json) has `updates.enabled: false` — `expo-updates` was disabled in commit `4a0e50e` because the StartupProcedure/ErrorRecovery queue was crashing on launch. Any production fix requires a full EAS rebuild + Apple review (request expedited review for ~24h turnaround). Re-enabling OTA is v1.0.1 work — diagnose runtime version mismatch / embedded manifest hash / expo-updates SQLite corruption.
+- **OTA is enabled but untested.** [apps/mobile/app.json:70-72](apps/mobile/app.json#L70-L72) has `updates.url` and no `enabled: false`. expo-updates was briefly disabled (`4a0e50e`) after a launch crash, but commit `fbb9917` diagnosed the real cause — EXPO_PUBLIC_* env vars weren't injected at bundle-build time, so Supabase's `createClient(undefined, undefined)` threw at module load, which expo-updates' ErrorRecovery caught and re-threw as the abort. Env-var injection was fixed and OTA re-enabled in the same commit. **No OTA update has actually been published to the `production` channel yet** — verify with a no-op `eas update --branch production` against a TestFlight install of build 14 before relying on it. If it crashes anyway, v1.0.1 fallback plan: `enabled: false` + `checkAutomatically: NEVER` + `fallbackToCacheTimeout: 0` + manual JS-side update check post-auth.
 
 **Phases 1-3 are largely complete** per [ROADMAP.md](ROADMAP.md): profiles, binder CRUD, card upload + TCG autocomplete, binder/page detail with real binder semantics, follows/likes/saves/comments, search by user/binder/card/tag, push notifications, block/report.
 
@@ -106,7 +106,7 @@ RLS on everything. Storage buckets for binder covers + card photos.
 4. **Lockfile is `--frozen-lockfile`** in CI. Any `package.json` change → run `pnpm install` and commit `pnpm-lock.yaml` in the same PR.
 5. **Splash and icon are configured per-platform.** Top-level `icon`/splash `image` applies to both; only override per-platform with a deliberate reason.
 6. **Reanimated v4 + react-native-worklets** — drag gestures use shared values + `runOnJS` to commit. Watch for stale-closure footguns in mutations triggered from worklets.
-7. **OTA is disabled.** `expo-updates` won't run. Don't suggest "we can ship a quick OTA hotfix" — that path doesn't exist until v1.0.1 re-enables it. Production fixes go through EAS build + Apple review.
+7. **OTA is enabled but unverified.** `expo-updates` is configured and will check the `production` channel. No update has been published yet — don't promise "we can ship a quick OTA hotfix" until the channel has been tested with a no-op `eas update --branch production` against a real device. The prior crash was caused by missing EXPO_PUBLIC_ env vars (Supabase init threw, expo-updates' ErrorRecovery propagated it as the launch abort), not an expo-updates bug; that's fixed in `eas.json`.
 
 ## Useful commands
 
