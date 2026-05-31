@@ -135,17 +135,20 @@ export default function BinderDetailScreen() {
         })()
       : 0;
 
-  // Group preview URLs by page_id so each PageThumbnail can render its own mini grid.
-  // Cap at 16 (the largest possible layout = 4×4 / sixteen_pocket). Cards without an
-  // image take a slot with null so the empty pocket sits where that card actually is.
+  // Group preview URLs by page_id, placing each card at its actual `position`
+  // so the mini-grid mirrors the real page (empty pockets where cards aren't,
+  // not just left-to-right fill). Overflow cards (position >= slotCount) are
+  // omitted from the preview since they live on a second spread the thumbnail
+  // doesn't show.
+  const slotCount = binderCols * binderCols;
   const previewsByPage = new Map<string, (string | null)[]>();
   for (const card of allCards ?? []) {
     if (!card.page_id) continue;
-    const existing = previewsByPage.get(card.page_id) ?? [];
-    if (existing.length < 16) {
-      existing.push(card.photos[0]?.url ?? card.tcg_card?.image_small ?? null);
-      previewsByPage.set(card.page_id, existing);
-    }
+    if (card.position < 0 || card.position >= slotCount) continue;
+    const existing =
+      previewsByPage.get(card.page_id) ?? (new Array(slotCount).fill(null) as (string | null)[]);
+    existing[card.position] = card.photos[0]?.url ?? card.tcg_card?.image_small ?? null;
+    previewsByPage.set(card.page_id, existing);
   }
 
   // Card counts per page
