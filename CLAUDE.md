@@ -90,7 +90,7 @@ RLS on everything. Storage buckets for binder covers + card photos.
 
 - Build 14 approved, awaiting manual release on **2026-06-10**.
 - Launch day: coordinated TikTok/Bluesky/X posts, email waitlist via Resend, creator coordination per [bindercle-social-agent.md](bindercle-social-agent.md).
-- Hotfix readiness: EAS OTA updates are configured (`runtimeVersion.policy: appVersion`).
+- **No OTA hotfix path.** [apps/mobile/app.json](apps/mobile/app.json) has `updates.enabled: false` — `expo-updates` was disabled in commit `4a0e50e` because the StartupProcedure/ErrorRecovery queue was crashing on launch. Any production fix requires a full EAS rebuild + Apple review (request expedited review for ~24h turnaround). Re-enabling OTA is v1.0.1 work — diagnose runtime version mismatch / embedded manifest hash / expo-updates SQLite corruption.
 
 **Phases 1-3 are largely complete** per [ROADMAP.md](ROADMAP.md): profiles, binder CRUD, card upload + TCG autocomplete, binder/page detail with real binder semantics, follows/likes/saves/comments, search by user/binder/card/tag, push notifications, block/report.
 
@@ -106,6 +106,7 @@ RLS on everything. Storage buckets for binder covers + card photos.
 4. **Lockfile is `--frozen-lockfile`** in CI. Any `package.json` change → run `pnpm install` and commit `pnpm-lock.yaml` in the same PR.
 5. **Splash and icon are configured per-platform.** Top-level `icon`/splash `image` applies to both; only override per-platform with a deliberate reason.
 6. **Reanimated v4 + react-native-worklets** — drag gestures use shared values + `runOnJS` to commit. Watch for stale-closure footguns in mutations triggered from worklets.
+7. **OTA is disabled.** `expo-updates` won't run. Don't suggest "we can ship a quick OTA hotfix" — that path doesn't exist until v1.0.1 re-enables it. Production fixes go through EAS build + Apple review.
 
 ## Useful commands
 
