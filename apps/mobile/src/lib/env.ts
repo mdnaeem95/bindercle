@@ -16,26 +16,31 @@
  * even when literally nothing else is configured.
  */
 
-/** Env vars the app cannot function without. */
-const REQUIRED_ENV_VARS = [
-  'EXPO_PUBLIC_SUPABASE_URL',
-  'EXPO_PUBLIC_SUPABASE_ANON_KEY',
-  'EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID',
-] as const;
+/**
+ * Each entry MUST access process.env via direct dot notation with a literal
+ * key, because Metro / Babel's expo-router plugin only inlines EXPO_PUBLIC_*
+ * accesses when the key is a static literal. Using bracket notation with a
+ * variable (e.g. `process.env[key]` inside a loop) returns `undefined` at
+ * runtime even when the value was injected at build time — silently breaking
+ * the validation. Each var is read once into a plain object; iterate over
+ * THAT object, not over a dynamic key list.
+ */
+const REQUIRED_ENV_VARS: Record<string, string | undefined> = {
+  EXPO_PUBLIC_SUPABASE_URL: process.env.EXPO_PUBLIC_SUPABASE_URL,
+  EXPO_PUBLIC_SUPABASE_ANON_KEY: process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY,
+  EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
+};
 
-export type RequiredEnvVar = (typeof REQUIRED_ENV_VARS)[number];
-
-export type EnvValidationResult = { valid: true } | { valid: false; missing: RequiredEnvVar[] };
+export type EnvValidationResult = { valid: true } | { valid: false; missing: string[] };
 
 /**
- * Inspect process.env for the required public env vars. A value is
+ * Inspect the resolved env-var object for missing values. A value is
  * considered missing if undefined OR an empty/whitespace-only string —
  * both produce identical downstream Supabase init failures.
  */
 export function validateLaunchEnv(): EnvValidationResult {
-  const missing: RequiredEnvVar[] = [];
-  for (const key of REQUIRED_ENV_VARS) {
-    const value = process.env[key];
+  const missing: string[] = [];
+  for (const [key, value] of Object.entries(REQUIRED_ENV_VARS)) {
     if (!value || value.trim().length === 0) {
       missing.push(key);
     }
