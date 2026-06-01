@@ -1,3 +1,5 @@
+import { ConfigurationErrorScreen } from '@/components/ConfigurationErrorScreen';
+import { validateLaunchEnv } from '@/lib/env';
 import { useFoilioFonts } from '@/lib/fonts';
 import { initializeObservability, posthog } from '@/lib/observability';
 import { queryClient } from '@/lib/query';
@@ -10,9 +12,18 @@ import { StatusBar } from 'expo-status-bar';
 import { PostHogProvider } from 'posthog-react-native';
 import { useEffect, useRef } from 'react';
 
+// Validate required env vars BEFORE initializing observability or anything
+// else that depends on them. If invalid, the app renders ConfigurationErrorScreen
+// and bails — no Sentry/PostHog/Supabase init, no native crash. See env.ts for
+// the failure history this guards against.
+const envValidation = validateLaunchEnv();
+
 // Initialize Sentry + PostHog before any component renders so the very
-// first error/event is captured.
-initializeObservability();
+// first error/event is captured. Skip when env is invalid — Sentry/PostHog
+// may themselves be the missing config.
+if (envValidation.valid) {
+  initializeObservability();
+}
 
 function RootLayout() {
   const [fontsLoaded] = useFoilioFonts();
@@ -78,5 +89,18 @@ function RootLayout() {
   );
 }
 
+/**
+ * Outer gate — decides whether the real app boots or whether we show the
+ * configuration error screen. Kept separate from RootLayout so RootLayout's
+ * hook ordering stays stable regardless of env state.
+ */
+function App() {
+  if (!envValidation.valid) {
+    return <ConfigurationErrorScreen missing={envValidation.missing} />;
+  }
+  return <RootLayout />;
+}
+
 // Wrap the root with Sentry's error boundary + navigation instrumentation.
-export default Sentry.wrap(RootLayout);
+// Sentry.wrap is a no-op when Sentry.init wasn't called (the env-invalid case).
+export default Sentry.wrap(App);
