@@ -1,11 +1,11 @@
 import { useHandleAvailability } from '@/hooks/useHandleAvailability';
 import { useProfile } from '@/hooks/useProfile';
 import { useUpdateProfile } from '@/hooks/useUpdateProfile';
-import { trackEvent } from '@/lib/observability';
+import { posthog, trackEvent } from '@/lib/observability';
 import { pickImage, uploadAvatar } from '@/lib/uploads';
 import { type ProfileFormValues, profileFormSchema } from '@/lib/validators/profile';
 import { useAuthStore } from '@/stores/auth';
-import { Avatar, Button, Input, Surface, Text, useTheme } from '@foilio/ui';
+import { Avatar, Button, ChipGroup, Input, Surface, Text, useTheme } from '@foilio/ui';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Redirect, router } from 'expo-router';
 import { useState } from 'react';
@@ -22,10 +22,27 @@ import {
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 /**
+ * Self-reported acquisition channels. Values are the analytics-stable
+ * identifiers (snake_case, lowercase) and must match the `?src=` values
+ * used on bindercle.app so cross-platform attribution joins cleanly in
+ * PostHog. Keep this list in sync with the landing-page tagging.
+ */
+const ACQUISITION_SOURCES = [
+  { value: 'tiktok', label: 'TikTok' },
+  { value: 'instagram', label: 'Instagram' },
+  { value: 'reddit', label: 'Reddit' },
+  { value: 'friend', label: 'Friend' },
+  { value: 'press', label: 'Press' },
+  { value: 'other', label: 'Other' },
+] as const;
+
+type AcquisitionSource = (typeof ACQUISITION_SOURCES)[number]['value'];
+
+/**
  * First-run flow. Shown when a freshly signed-in user has no
  * `onboarded_at` timestamp yet. They pick a handle and (optionally) a
- * display name, avatar, and bio. "Get started" persists everything and
- * marks them onboarded.
+ * display name, avatar, bio, and acquisition source. "Get started"
+ * persists everything and marks them onboarded.
  */
 export default function OnboardingScreen() {
   const theme = useTheme();
@@ -35,6 +52,9 @@ export default function OnboardingScreen() {
   const { data: profile, isLoading } = useProfile();
   const updateProfile = useUpdateProfile();
   const [avatarBusy, setAvatarBusy] = useState(false);
+  const [acquisitionSource, setAcquisitionSource] = useState<AcquisitionSource | undefined>(
+    undefined,
+  );
 
   // ALL hooks must run on every render — if we early-return above useForm /
   // useHandleAvailability, React throws "rendered fewer hooks than expected"
@@ -96,6 +116,14 @@ export default function OnboardingScreen() {
         link: values.link?.trim() || null,
         onboarded_at: new Date().toISOString(),
       });
+      // Attach acquisition source as a PostHog super-property BEFORE the
+      // completion event so the breakdown attaches to every subsequent
+      // event (funnel attribution). Skip silently when the user didn't pick
+      // a source — "no answer" is a valid signal.
+      if (acquisitionSource) {
+        posthog?.register({ acquisition_source: acquisitionSource });
+        trackEvent('acquisition_source_reported', { source: acquisitionSource });
+      }
       trackEvent('onboarding_completed');
       router.replace('/');
     } catch (e) {
@@ -233,6 +261,21 @@ export default function OnboardingScreen() {
                 />
               )}
             />
+
+            {/* Acquisition source — self-reported channel attribution */}
+            <View style={{ gap: 8 }}>
+              <Text variant="caption" tone="secondary">
+                How did you find Bindercle?
+              </Text>
+              <Text variant="caption" tone="tertiary">
+                Optional — helps us know where our people come from
+              </Text>
+              <ChipGroup
+                options={ACQUISITION_SOURCES.map((s) => ({ value: s.value, label: s.label }))}
+                value={acquisitionSource}
+                onChange={(v) => setAcquisitionSource(v as AcquisitionSource | undefined)}
+              />
+            </View>
 
             <Button
               variant="primary"
