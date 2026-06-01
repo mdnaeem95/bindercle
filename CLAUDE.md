@@ -107,6 +107,7 @@ RLS on everything. Storage buckets for binder covers + card photos.
 5. **Splash and icon are configured per-platform.** Top-level `icon`/splash `image` applies to both; only override per-platform with a deliberate reason.
 6. **Reanimated v4 + react-native-worklets** — drag gestures use shared values + `runOnJS` to commit. Watch for stale-closure footguns in mutations triggered from worklets.
 7. **OTA works** (`production` channel, verified 2026-06-01). JS-only changes can ship via `eas update --branch production` without a rebuild. Native changes (new packages, app.json native config, icon/splash) still need a new EAS build + Apple review. Don't promise an OTA hotfix for a change that touches native — check whether the diff is JS-only first.
+8. **`eas update` does NOT inherit eas.json's `env` block.** This is a separate concern from #7. `eas build --profile production` bakes env vars from `eas.json` into the native bundle, but `eas update --branch production` builds the JS bundle from whatever's in your local shell. If you publish an OTA without `--build-profile production`, every `EXPO_PUBLIC_*` value gets bundled as `undefined`, Supabase init fails, and the `ConfigurationErrorScreen` (or worse, a native crash) ships to users. **Always pass `--build-profile production` when running `eas update`**, or explicitly export the env vars in your shell first. Hit this on 2026-06-01 and the validateLaunchEnv safeguard caught it; without that safeguard it would have been a launch-day disaster.
 
 ## Useful commands
 
