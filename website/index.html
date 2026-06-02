@@ -15,6 +15,40 @@
   <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;600&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="styles.css" />
   <script src="analytics.js"></script>
+  <script>
+    // Channel-tagged bio links (?src=<channel>) redirect to the matching Apple
+    // Custom Product Page so we get the App Store CPP install attribution in
+    // addition to the PostHog landing_page_view fired by analytics.js above.
+    // Unrecognised or absent src renders the landing page normally — adding a
+    // new channel is one new entry in the map below.
+    //
+    // The 300ms grace lets PostHog's async capture() complete its network
+    // request before navigation cancels it. If the bundled PostHog version is
+    // bumped to one supporting capture(event, callback), switch to a
+    // callback-driven redirect and drop the magic number.
+    //
+    // Lives in index.html (not analytics.js) on purpose: CPP URLs are
+    // marketing data that changes per campaign, and the redirect must only
+    // apply to / — keeping it here naturally gates it to the landing page.
+    (function () {
+      var CPP_REDIRECTS = {
+        tiktok:
+          'https://apps.apple.com/us/app/bindercle/id6772837023?ppid=9a882803-82c9-4a04-bc8c-f1128d53dee5',
+        instagram:
+          'https://apps.apple.com/us/app/bindercle/id6772837023?ppid=e3cdb4de-f65e-48b1-a137-b1d582fa0d3f',
+        reddit:
+          'https://apps.apple.com/us/app/bindercle/id6772837023?ppid=e31e7ffe-e9fe-4fc8-8756-0c87c81cd6d7',
+        press:
+          'https://apps.apple.com/us/app/bindercle/id6772837023?ppid=e622b2c6-2f49-42d6-aca6-a6c1fc442954',
+      };
+      var src = new URLSearchParams(window.location.search).get('src');
+      if (src && CPP_REDIRECTS[src]) {
+        setTimeout(function () {
+          window.location.replace(CPP_REDIRECTS[src]);
+        }, 300);
+      }
+    })();
+  </script>
 </head>
 <body>
   <main>
