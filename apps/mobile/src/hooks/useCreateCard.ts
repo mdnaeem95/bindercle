@@ -32,7 +32,17 @@ export function useCreateCard() {
   const queryClient = useQueryClient();
   const userId = useAuthStore((s) => s.user?.id);
 
-  return useMutation<Card, Error, CreateCardInput>({
+  return useMutation<Card, Error, CreateCardInput, { isFirst: boolean }>({
+    onMutate: async () => {
+      if (!userId) return { isFirst: false };
+      const { data: anyExisting } = await supabase
+        .from('cards')
+        .select('id')
+        .eq('owner_id', userId)
+        .limit(1)
+        .maybeSingle();
+      return { isFirst: !anyExisting };
+    },
     mutationFn: async (input) => {
       if (!userId) throw new Error('Not authenticated');
 
@@ -98,11 +108,11 @@ export function useCreateCard() {
 
       return card;
     },
-    onSuccess: (card, input) => {
-      trackEvent('card_created', {
-        photo_count: input.photo_uris.length,
-        has_set: !!input.set_code || !!input.set_number,
-        has_condition: !!input.condition,
+    onSuccess: (card, input, context) => {
+      trackEvent('card_added', {
+        page_position: card.position,
+        is_first: context?.isFirst ?? false,
+        via: 'empty_slot',
       });
       queryClient.invalidateQueries({ queryKey: cardsForPageQueryKey(input.page_id) });
       queryClient.invalidateQueries({ queryKey: cardsForBinderQueryKey(card.binder_id) });

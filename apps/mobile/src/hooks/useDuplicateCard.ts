@@ -83,7 +83,11 @@ export function useDuplicateCard() {
       return card;
     },
     onSuccess: (card) => {
-      trackEvent('card_duplicated', { source_binder_id: card.binder_id });
+      trackEvent('card_added', {
+        page_position: card.position,
+        is_first: false,
+        via: 'duplicate',
+      });
       queryClient.invalidateQueries({ queryKey: bindersQueryKey(userId) });
       queryClient.invalidateQueries({ queryKey: cardsForBinderQueryKey(card.binder_id) });
       queryClient.invalidateQueries({ queryKey: pagesForBinderQueryKey(card.binder_id) });

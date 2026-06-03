@@ -21,7 +21,17 @@ export function useCreateBinder() {
   const queryClient = useQueryClient();
   const userId = useAuthStore((s) => s.user?.id);
 
-  return useMutation<Binder, Error, CreateBinderInput>({
+  return useMutation<Binder, Error, CreateBinderInput, { isFirst: boolean }>({
+    onMutate: async () => {
+      if (!userId) return { isFirst: false };
+      const { data: anyExisting } = await supabase
+        .from('binders')
+        .select('id')
+        .eq('owner_id', userId)
+        .limit(1)
+        .maybeSingle();
+      return { isFirst: !anyExisting };
+    },
     mutationFn: async (input) => {
       if (!userId) throw new Error('Not authenticated');
 
@@ -46,11 +56,13 @@ export function useCreateBinder() {
 
       return binder;
     },
-    onSuccess: (binder, input) => {
+    onSuccess: (binder, input, context) => {
       trackEvent('binder_created', {
         is_public: input.is_public,
         tag_count: input.tags.length,
         has_cover: !!input.cover_image_url,
+        layout_type: binder.layout_type,
+        is_first: context?.isFirst ?? false,
       });
       queryClient.invalidateQueries({ queryKey: bindersQueryKey(userId) });
       queryClient.setQueryData(binderQueryKey(binder.id), { ...binder, tags: [] });
