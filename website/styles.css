@@ -131,6 +131,20 @@ footer nav { display: flex; gap: 16px; flex-wrap: wrap; }
   color: var(--text-primary);
   border: 1px solid var(--border-default);
 }
+/* App Store badge CTA (launch-state). The badge is Apple's official lockup;
+   strip the pill chrome so the asset speaks for itself. */
+.cta--appstore {
+  padding: 0;
+  background: transparent;
+  border-radius: 0;
+}
+.cta--appstore:hover { opacity: 0.9; }
+.cta--appstore img {
+  display: block;
+  width: 180px;
+  height: auto;
+  max-width: 100%;
+}
 
 .features {
   display: grid;
@@ -147,8 +161,21 @@ footer nav { display: flex; gap: 16px; flex-wrap: wrap; }
   border: 1px solid var(--border-subtle);
   border-radius: 16px;
 }
-.features .feature h3 { margin: 0 0 6px; color: var(--accent); font-family: 'Instrument Serif', Georgia, serif; font-weight: 400; font-size: 20px; letter-spacing: 0; }
+.features .feature h2 { margin: 0 0 6px; color: var(--accent); font-family: 'Instrument Serif', Georgia, serif; font-weight: 400; font-size: 20px; letter-spacing: 0; }
 .features .feature p { font-size: 14px; margin: 0; color: var(--text-secondary); }
+
+/* Pre-launch hero CTA subtext — remove for launch-state variant. */
+.hero-launch-eta { margin-top: 16px; font-size: 13px; color: var(--text-tertiary); }
+
+/* #beta mailto link — high contrast + underline so it passes WCAG 1.4.1
+   and is recognisable as a link to low-vision users (not just via colour). */
+#beta p a {
+  color: #F4E8D8;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  border-bottom: none;
+}
+#beta p a:hover { color: var(--accent); border-bottom: none; }
 
 .muted { color: var(--text-tertiary); font-size: 13px; }
 .last-updated { color: var(--text-tertiary); font-size: 14px; margin-top: -8px; margin-bottom: 32px; }
