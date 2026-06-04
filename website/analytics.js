@@ -52,6 +52,13 @@
       )
         g(u, o[n]);
       e._SV = 1;
+      // Queue the init args so array.js can replay them on the real instance.
+      // Without this push, array.js loads with an empty _i queue and falls back
+      // to its hardcoded default api_host (us.i.posthog.com) — the real init
+      // never receives the EU host or our API key, so __loaded stays false and
+      // no capture() POSTs ever fire. The version of the PostHog dashboard
+      // snippet we pasted in originally was missing this line.
+      e._i.push([i, s, a]);
     }));
 })(document, window.posthog || []);
 
