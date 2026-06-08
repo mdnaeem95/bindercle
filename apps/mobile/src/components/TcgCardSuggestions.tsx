@@ -13,7 +13,7 @@ type TcgCardSuggestionsProps = {
 
 const GAME_OPTIONS: { value: TcgGame; label: string }[] = [
   { value: 'pokemon', label: 'EN' },
-  { value: 'pokemon-japan', label: 'JP' },
+  { value: 'pokemon-jp', label: 'JP' },
 ];
 
 /**

@@ -20,7 +20,7 @@ import { supabase } from './supabase';
  *   (the UI shows variant info so users can disambiguate)
  */
 
-export type TcgGame = 'pokemon' | 'pokemon-japan';
+export type TcgGame = 'pokemon' | 'pokemon-jp';
 
 interface TcgPriceLookupCard {
   id: string;
@@ -103,7 +103,7 @@ function mapCard(raw: TcgPriceLookupCard): TcgApiCard {
  * Search TCG cards.
  *
  * `offset` + `limit` enable pagination in the suggestions UI (load-more).
- * `game` defaults to 'pokemon' (English); pass 'pokemon-japan' to search
+ * `game` defaults to 'pokemon' (English); pass 'pokemon-jp' to search
  * Japanese sets instead.
  */
 export async function searchTcgCards(

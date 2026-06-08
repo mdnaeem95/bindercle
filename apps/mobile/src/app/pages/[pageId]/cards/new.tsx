@@ -156,7 +156,15 @@ export default function NewCardScreen() {
         photo_uris: photos,
         position: targetPosition,
       });
-      router.replace(`/pages/${pageId}`);
+      // Pop back to the page detail we came from. router.replace would push a
+      // *new* page detail entry onto the stack on top of the original one — so
+      // after N "add card" round-trips the stack accumulates N extra page
+      // entries the user has to swipe through to reach the binder.
+      if (router.canGoBack()) {
+        router.back();
+      } else {
+        router.replace(`/pages/${pageId}`);
+      }
     } catch (e) {
       const err = e as { message?: string };
       Alert.alert('Could not save card', err.message ?? 'Try again.');
