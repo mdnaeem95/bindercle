@@ -1,23 +1,4 @@
 <!doctype html>
-<!--
-  Launch-state landing page. On Wed Jun 10 ~11:30 SGT (after Sani presses
-  release in App Store Connect), rename this file to index.html (and rename
-  the current index.html to index-prelaunch.html as a rollback). Single deploy.
-
-  Diff vs the pre-launch index.html:
-    1. Hero CTA: "Join the TestFlight" link → Apple App Store badge.
-    2. Removed the "Launching Wed Jun 10 on the App Store." subtext below CTA.
-    3. Bottom #beta section: "Coming soon to TestFlight" → "Now on iOS",
-       framed as launched + pika@ as founder feedback inbox.
-
-  Everything else (meta tags, JSON-LD, redirect script, feature cards,
-  footer) is identical to index.html. Keep them in sync if you edit one.
-
-  REQUIRED ASSET (must be on disk before this file replaces index.html):
-    /assets/app-store-badge.svg — Apple's official "Download on the App Store"
-    SVG lockup from https://developer.apple.com/app-store/marketing/guidelines/.
-    Don't recolor, restretch, or overlay text per Apple's guidelines.
--->
 <html lang="en">
 <head>
   <meta charset="utf-8" />
@@ -142,9 +123,8 @@
         A binder you can carry. A collection you can share. A home for every card
         you've ever pulled — themed, captioned, and on a page that feels like yours.
       </p>
-      <a class="cta cta--appstore" href="https://apps.apple.com/us/app/bindercle/id6772837023" aria-label="Download Bindercle on the App Store">
-        <img src="/assets/app-store-badge.svg" alt="Download on the App Store" width="180" height="60" />
-      </a>
+      <a class="cta" href="#beta">Join the TestFlight</a>
+      <p class="hero-launch-eta">Launching Wed Jun 10 on the App Store.</p>
     </section>
 
     <section class="features">
@@ -167,12 +147,12 @@
     </section>
 
     <section id="beta">
-      <h2>Now on iOS</h2>
+      <h2>Coming soon to TestFlight</h2>
       <p>
-        Bindercle is live on the App Store. Download free. Have feedback or
-        feature requests? Email
-        <a href="mailto:pika@bindercle.app">pika@bindercle.app</a> — Sani reads
-        every message.
+        Bindercle is in private beta on iOS. If you're a Pokemon TCG collector who'd
+        like to try it before the public release, send a note to
+        <a href="mailto:pika@bindercle.app">pika@bindercle.app</a> with the email
+        attached to your Apple ID and we'll add you to the tester list.
       </p>
       <p class="muted">
         Android comes later. Other TCGs (Magic, Lorcana, sports cards) likely come later still — we want
