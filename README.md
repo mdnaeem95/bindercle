@@ -6,9 +6,12 @@ Pokemon TCG collection showcase mobile app. Pinterest meets card collecting.
 
 ## Documents
 
+- [docs/CODEBASE.md](docs/CODEBASE.md) — technical onboarding / current state (post-launch source of truth)
 - [MASTER_PLAN.md](MASTER_PLAN.md) — product strategy, scope, business model
 - [BRAND.md](BRAND.md) — brand identity (Holo Luxe), design tokens
 - [ROADMAP.md](ROADMAP.md) — week-by-week execution plan
+- [decisions/2026-06-01-hotfix-policy.md](decisions/2026-06-01-hotfix-policy.md) — severity ladder + OTA/rollback rules
+- [SMOKE-TESTS.md](SMOKE-TESTS.md) — pre-OTA smoke spec
 
 ## Repo layout
 
