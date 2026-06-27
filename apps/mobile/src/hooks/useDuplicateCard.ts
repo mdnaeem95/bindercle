@@ -84,6 +84,8 @@ export function useDuplicateCard() {
     },
     onSuccess: (card) => {
       trackEvent('card_added', {
+        binder_id: card.binder_id,
+        page_id: card.page_id ?? null,
         page_position: card.position,
         is_first: false,
         via: 'duplicate',

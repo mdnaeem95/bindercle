@@ -110,6 +110,8 @@ export function useCreateCard() {
     },
     onSuccess: (card, input, context) => {
       trackEvent('card_added', {
+        binder_id: card.binder_id,
+        page_id: input.page_id,
         page_position: card.position,
         is_first: context?.isFirst ?? false,
         via: 'empty_slot',
