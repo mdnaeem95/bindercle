@@ -144,7 +144,7 @@ export default function NewBinderScreen() {
               loading={busy}
               onPress={handleSubmit(onSubmit)}
             >
-              start building
+              Create
             </Button>
           </View>
 
