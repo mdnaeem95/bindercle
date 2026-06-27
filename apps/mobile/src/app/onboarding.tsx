@@ -8,7 +8,7 @@ import { useAuthStore } from '@/stores/auth';
 import { Avatar, Button, ChipGroup, Input, Surface, Text, useTheme } from '@foilio/ui';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Redirect, router } from 'expo-router';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import {
   ActivityIndicator,
@@ -55,6 +55,12 @@ export default function OnboardingScreen() {
   const [acquisitionSource, setAcquisitionSource] = useState<AcquisitionSource | undefined>(
     undefined,
   );
+  // Set the instant onboarding completes so the redirect guard below routes a
+  // just-finished first-run user into binder creation (the wedge) instead of
+  // the empty feed — without hijacking an already-onboarded manual visitor,
+  // who still goes home. Guards against the cache-update re-render racing the
+  // imperative router.replace in onSubmit.
+  const completedOnboardingRef = useRef(false);
 
   // ALL hooks must run on every render — if we early-return above useForm /
   // useHandleAvailability, React throws "rendered fewer hooks than expected"
@@ -88,7 +94,8 @@ export default function OnboardingScreen() {
   // Gates after all hooks: not signed in → sign-in. Already onboarded → home
   // (lets a signed-in user visit /onboarding manually without a loop after save).
   if (status === 'unauthenticated') return <Redirect href="/sign-in" />;
-  if (profile?.onboarded_at) return <Redirect href="/" />;
+  if (profile?.onboarded_at)
+    return <Redirect href={completedOnboardingRef.current ? '/binders/new' : '/'} />;
 
   const onChangeAvatar = async () => {
     if (!userId) return;
@@ -125,7 +132,9 @@ export default function OnboardingScreen() {
         trackEvent('acquisition_source_reported', { source: acquisitionSource });
       }
       trackEvent('onboarding_completed');
-      router.replace('/');
+      // The wedge: first-run ends in *building*, not the empty feed.
+      completedOnboardingRef.current = true;
+      router.replace('/binders/new');
     } catch (e) {
       const err = e as { message?: string };
       Alert.alert("Couldn't save", err.message ?? 'Try again.');
@@ -166,10 +175,9 @@ export default function OnboardingScreen() {
           >
             {/* Hero */}
             <View style={{ gap: 8, marginTop: 8 }}>
-              <Text variant="display2">Welcome to Bindercle</Text>
+              <Text variant="display2">welcome to bindercle.</Text>
               <Text variant="body" tone="secondary">
-                A home for your themed Pokemon collections. Set up your profile so people know who's
-                behind the binders.
+                this is your shelf. let's make the first page you'd actually want to show off.
               </Text>
             </View>
 
@@ -195,13 +203,13 @@ export default function OnboardingScreen() {
               name="handle"
               render={({ field: { value, onChange, onBlur } }) => (
                 <Input
-                  label="Handle"
+                  label="pick a handle."
                   hint={
                     availability.status === 'available'
                       ? 'Available'
                       : availability.status === 'checking'
                         ? 'Checking…'
-                        : 'Lowercase letters, numbers, underscores'
+                        : "it's how people find your binders later — but for now, they're just for you."
                   }
                   error={
                     errors.handle?.message ??
@@ -250,7 +258,7 @@ export default function OnboardingScreen() {
               render={({ field: { value, onChange, onBlur } }) => (
                 <Input
                   label="Bio"
-                  hint="Optional — one line about your collection"
+                  hint="a line about what you collect (optional)."
                   error={errors.bio?.message}
                   value={value ?? ''}
                   onChangeText={onChange}
@@ -265,10 +273,10 @@ export default function OnboardingScreen() {
             {/* Acquisition source — self-reported channel attribution */}
             <View style={{ gap: 8 }}>
               <Text variant="caption" tone="secondary">
-                How did you find Bindercle?
+                last thing — how'd you find us?
               </Text>
               <Text variant="caption" tone="tertiary">
-                Optional — helps us know where our people come from
+                helps us know what's working. no wrong answer.
               </Text>
               <ChipGroup
                 options={ACQUISITION_SOURCES.map((s) => ({ value: s.value, label: s.label }))}
@@ -284,7 +292,7 @@ export default function OnboardingScreen() {
               loading={isSubmitting || updateProfile.isPending}
               onPress={handleSubmit(onSubmit)}
             >
-              Get started
+              make my first binder
             </Button>
           </ScrollView>
         </SafeAreaView>

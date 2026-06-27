@@ -144,7 +144,7 @@ export default function NewBinderScreen() {
               loading={busy}
               onPress={handleSubmit(onSubmit)}
             >
-              Create
+              start building
             </Button>
           </View>
 
@@ -194,7 +194,8 @@ export default function NewBinderScreen() {
               name="title"
               render={({ field: { value, onChange, onBlur } }) => (
                 <Input
-                  label="Title"
+                  label="what's this binder for?"
+                  hint="a set you're chasing, a vibe, a favorite artist — anything. you can rename it later."
                   placeholder="Dabbing Pokemon"
                   error={errors.title?.message}
                   value={value}
@@ -253,7 +254,11 @@ export default function NewBinderScreen() {
               render={({ field: { value, onChange } }) => (
                 <View style={{ gap: 8 }}>
                   <Text variant="caption" tone="secondary">
-                    Layout
+                    pick your pocket layout.
+                  </Text>
+                  <Text variant="caption" tone="tertiary">
+                    like the real thing — the whole binder commits to one. 4, 9, or 16 pockets a
+                    page.
                   </Text>
                   <ChipGroup
                     clearable={false}
