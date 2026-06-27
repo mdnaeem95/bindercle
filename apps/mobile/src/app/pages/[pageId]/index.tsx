@@ -332,9 +332,14 @@ function PageBody({
       />
 
       {cardCount === 0 && (
-        <Text variant="caption" tone="tertiary" align="center" style={{ marginTop: 4 }}>
-          Tap a pocket to add your first card.
-        </Text>
+        <View style={{ marginTop: 4, gap: 2 }}>
+          <Text variant="caption" tone="tertiary" align="center">
+            tap any pocket to add a card.
+          </Text>
+          <Text variant="caption" tone="tertiary" align="center">
+            leave gaps if you want — the layout's yours.
+          </Text>
+        </View>
       )}
     </ScrollView>
   );

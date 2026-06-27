@@ -110,10 +110,11 @@ export default function SearchScreen() {
             }}
           >
             <Text variant="display2" align="center">
-              No matches
+              no matches
             </Text>
             <Text variant="body" tone="secondary" align="center">
-              Nothing public matches "{trimmed}" yet.
+              no binders match "{trimmed}" yet. as bindercle grows, this fills in — or build the one
+              you were looking for.
             </Text>
           </View>
         ) : (

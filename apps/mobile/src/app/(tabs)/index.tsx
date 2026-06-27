@@ -108,14 +108,14 @@ function MineFeed({ insetsBottom }: { insetsBottom: number }) {
       >
         <Sprout size={48} color={theme.colors.textTertiary} strokeWidth={1.6} />
         <Text variant="display2" align="center">
-          Nothing here yet
+          nothing here yet
         </Text>
         <Text variant="body" tone="secondary" align="center">
           Make a binder of dabbing Pokemon. Or shiny Eevees. Or hat-wearing anybodies. The theme is
           the joke.
         </Text>
         <Button variant="primary" size="md" onPress={() => router.push('/binders/new')}>
-          Make my first binder
+          make my first binder
         </Button>
       </View>
     );

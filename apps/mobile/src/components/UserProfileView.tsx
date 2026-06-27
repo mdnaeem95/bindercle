@@ -238,8 +238,13 @@ export function UserProfileView({ userId, hideBackButton }: UserProfileViewProps
             ) : (
               <View style={{ alignItems: 'center', paddingVertical: 32, gap: 6 }}>
                 <Text variant="body" tone="secondary">
-                  {isSelf ? 'No binders yet' : 'No public binders yet'}
+                  {isSelf ? 'no binders yet.' : 'no public binders yet.'}
                 </Text>
+                {isSelf ? (
+                  <Text variant="caption" tone="tertiary" align="center">
+                    the first one's the fun part. start with the cards you'd grab first.
+                  </Text>
+                ) : null}
               </View>
             )
           }

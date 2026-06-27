@@ -64,10 +64,10 @@ export default function NotificationsScreen() {
           >
             <Bell size={48} color={theme.colors.textTertiary} strokeWidth={1.6} />
             <Text variant="display2" align="center">
-              No notifications yet
+              nothing here yet.
             </Text>
             <Text variant="body" tone="secondary" align="center">
-              When someone likes, saves, or follows you, it'll land here.
+              follows, likes, and saves will show up as people find your binders.
             </Text>
           </View>
         ) : (

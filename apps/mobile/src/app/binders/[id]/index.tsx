@@ -428,10 +428,10 @@ export default function BinderDetailScreen() {
                 >
                   <BookOpen size={32} color={theme.colors.textTertiary} strokeWidth={1.6} />
                   <Text variant="body" align="center">
-                    No pages yet
+                    an empty binder, full of potential.
                   </Text>
                   <Text variant="caption" tone="secondary" align="center">
-                    Add a page to start arranging cards.
+                    add a page and start dropping cards in.
                   </Text>
                 </View>
               ) : reorganizing ? (
