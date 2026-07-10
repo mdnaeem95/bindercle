@@ -1,4 +1,6 @@
 import { useUnreadNotificationCount } from '@/hooks/useNotifications';
+import { useAuthStore } from '@/stores/auth';
+import { useRequireAuth } from '@/stores/authGate';
 import { useTheme } from '@foilio/ui';
 import { Tabs, router } from 'expo-router';
 import { Bell, House, Plus, Search, User } from 'lucide-react-native';
@@ -18,6 +20,7 @@ import { View } from 'react-native';
 export default function TabsLayout() {
   const theme = useTheme();
   const { data: unreadCount = 0 } = useUnreadNotificationCount();
+  const requireAuth = useRequireAuth();
 
   return (
     <Tabs
@@ -76,7 +79,10 @@ export default function TabsLayout() {
         listeners={{
           tabPress: (e) => {
             e.preventDefault();
-            router.push('/binders/new');
+            // "Build your own" is the headline wall. Signed in → straight to
+            // binder creation; anonymous → contextual prompt, then the
+            // onboarding wedge into /binders/new on success.
+            requireAuth('create_binder', () => router.push('/binders/new'));
           },
         }}
       />
@@ -102,11 +108,30 @@ export default function TabsLayout() {
             </View>
           ),
         }}
+        listeners={{
+          // Anon taps get the dismissable sign-in prompt (stay on the current
+          // tab), not a bounce to the /sign-in dead-end. Signed-in taps fall
+          // through to normal tab behavior.
+          tabPress: (e) => {
+            if (useAuthStore.getState().status !== 'authenticated') {
+              e.preventDefault();
+              requireAuth('view_notifications', () => router.navigate('/notifications'));
+            }
+          },
+        }}
       />
       <Tabs.Screen
         name="profile"
         options={{
           tabBarIcon: ({ color }) => <User size={24} color={color} strokeWidth={1.8} />,
+        }}
+        listeners={{
+          tabPress: (e) => {
+            if (useAuthStore.getState().status !== 'authenticated') {
+              e.preventDefault();
+              requireAuth('view_profile', () => router.navigate('/profile'));
+            }
+          },
         }}
       />
     </Tabs>

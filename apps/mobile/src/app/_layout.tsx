@@ -1,4 +1,6 @@
+import { AuthGateSheet } from '@/components/AuthGateSheet';
 import { ConfigurationErrorScreen } from '@/components/ConfigurationErrorScreen';
+import { ToastHost } from '@/components/ToastHost';
 import { validateLaunchEnv } from '@/lib/env';
 import { useFoilioFonts } from '@/lib/fonts';
 import { initializeObservability, posthog } from '@/lib/observability';
@@ -23,6 +25,28 @@ const envValidation = validateLaunchEnv();
 // may themselves be the missing config.
 if (envValidation.valid) {
   initializeObservability();
+}
+
+/**
+ * Routes that inherently require a session, even in the value-before-wall world.
+ * Everything NOT matched here is browsable anonymously (feed, binder/page/card
+ * detail, /users/[id], /tags/[slug], /search, comments viewing, onboarding).
+ *
+ *   - creation flows end in `/new`  (binders/new, .../pages/new, .../cards/new)
+ *   - editing flows end in `/edit`  (binders/[id]/edit, pages/[pageId]/edit, …)
+ *   - card reorder ends in `/move`
+ *   - the "you" surfaces: create tab, notifications tab, own profile, settings
+ */
+function isProtectedRoute(path: string): boolean {
+  if (path === '/create' || path === '/notifications' || path === '/settings') {
+    return true;
+  }
+  // Own-profile tab (/profile) and profile editor (/profile/edit). Other users'
+  // profiles live at /users/[id] and stay public.
+  if (path === '/profile' || path.startsWith('/profile/')) {
+    return true;
+  }
+  return path.endsWith('/new') || path.endsWith('/edit') || path.endsWith('/move');
 }
 
 function RootLayout() {
@@ -54,13 +78,29 @@ function RootLayout() {
     }
   }, [pathname, params]);
 
-  // Global auth guard: if the session is ever invalidated (sign-out, token
-  // expiry, manual revoke), bounce to /sign-in from wherever we are. The
-  // 'unknown' check above keeps the splash visible until the initial check
-  // resolves, so this only fires after a real state change.
+  // Global auth guard (w27 Item 1b — value-before-wall).
+  //
+  // Anonymous users may now BROWSE read-only surfaces (feed, binder/page/card
+  // detail, user profiles, tags, search). The wall moved from the door to the
+  // action (see requireAuth / the action gate) and to the protected routes
+  // below. So we no longer bounce every unauthenticated user to /sign-in —
+  // only when they land on a route that inherently requires a session.
+  //
+  // This is a backstop: the action gate prevents anon users from *reaching*
+  // most protected screens, but deep links / stale navigation could still,
+  // so the guard catches them. It also handles sign-out while on a protected
+  // screen (session invalidated → bounce), while leaving anon on read-only
+  // screens in place. The 'unknown' check above keeps the splash up until the
+  // initial auth check resolves, so this only fires after a real state change.
+  //
+  // Bounce to the anon HOME feed, not /sign-in. /sign-in is a full-screen
+  // dead-end (no tab bar, no back) — sending a just-signed-out user there
+  // stranded them. Home is browsable and carries a "Sign in" affordance, so
+  // there's always a way forward. Deliberate sign-in still routes to /sign-in
+  // (home header button) or the dismissable action gate.
   useEffect(() => {
-    if (authStatus === 'unauthenticated' && pathname !== '/sign-in') {
-      router.replace('/sign-in');
+    if (authStatus === 'unauthenticated' && isProtectedRoute(pathname)) {
+      router.replace('/');
     }
   }, [authStatus, pathname]);
 
@@ -83,6 +123,9 @@ function RootLayout() {
               contentStyle: { backgroundColor: darkTheme.colors.bgBase },
             }}
           />
+          {/* Root-mounted overlays: the contextual sign-in wall + toasts. */}
+          <AuthGateSheet />
+          <ToastHost />
         </ThemeContext.Provider>
       </PostHogProvider>
     </QueryClientProvider>

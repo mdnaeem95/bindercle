@@ -3,6 +3,7 @@ import { useBlockedUserIdSet } from '@/hooks/useBlockUser';
 import { type DiscoverBinder, useDiscoverBinders } from '@/hooks/useDiscoverBinders';
 import { useProfile } from '@/hooks/useProfile';
 import { type SavedBinder, useSavedBinders } from '@/hooks/useSavedBinders';
+import { trackEvent } from '@/lib/observability';
 import { useAuthStore } from '@/stores/auth';
 import {
   type AccentColor,
@@ -16,7 +17,7 @@ import {
 } from '@foilio/ui';
 import { Redirect, router } from 'expo-router';
 import { Bookmark, Compass, Sprout } from 'lucide-react-native';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ActivityIndicator, FlatList, Pressable, RefreshControl, View } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -27,14 +28,22 @@ export default function HomeScreen() {
   const status = useAuthStore((s) => s.status);
   const { data: profile } = useProfile();
   const [tab, setTab] = useState<Tab>('mine');
+  const isAnon = status === 'unauthenticated';
 
-  if (status === 'unauthenticated') {
-    return <Redirect href="/sign-in" />;
-  }
-  // First-run flow — pick a handle, etc — before the user sees the home feed.
+  // Top-of-funnel: anonymous browse is now the front door. Fire once on mount.
+  useEffect(() => {
+    trackEvent('feed_viewed', { anonymous: isAnon });
+  }, [isAnon]);
+
+  // First-run flow — pick a handle, etc — before the signed-in user sees the
+  // feed. Only fires for authed users (profile is undefined while anonymous).
   if (profile && !profile.onboarded_at) {
     return <Redirect href="/onboarding" />;
   }
+
+  // Anonymous viewers get the Discover feed only — "Mine" and "Saved" are
+  // session-scoped. The wall lands when they reach for an action, not here.
+  const activeTab: Tab = isAnon ? 'discover' : tab;
 
   return (
     <Surface level={0} style={{ flex: 1 }}>
@@ -51,26 +60,33 @@ export default function HomeScreen() {
           }}
         >
           <Text variant="heading2">Bindercle</Text>
+          {isAnon && (
+            <Button variant="secondary" size="sm" onPress={() => router.push('/sign-in')}>
+              Sign in
+            </Button>
+          )}
         </View>
 
-        {/* Tabs */}
-        <View style={{ paddingHorizontal: 16, paddingBottom: 8 }}>
-          <ChipGroup
-            clearable={false}
-            options={[
-              { value: 'mine', label: 'Mine' },
-              { value: 'saved', label: 'Saved' },
-              { value: 'discover', label: 'Discover' },
-            ]}
-            value={tab}
-            onChange={(next) => next && setTab(next)}
-          />
-        </View>
+        {/* Tabs — hidden for anonymous viewers (Mine/Saved need a session). */}
+        {!isAnon && (
+          <View style={{ paddingHorizontal: 16, paddingBottom: 8 }}>
+            <ChipGroup
+              clearable={false}
+              options={[
+                { value: 'mine', label: 'Mine' },
+                { value: 'saved', label: 'Saved' },
+                { value: 'discover', label: 'Discover' },
+              ]}
+              value={tab}
+              onChange={(next) => next && setTab(next)}
+            />
+          </View>
+        )}
 
         {/* Body */}
-        {tab === 'mine' ? (
+        {activeTab === 'mine' ? (
           <MineFeed insetsBottom={insets.bottom} />
-        ) : tab === 'saved' ? (
+        ) : activeTab === 'saved' ? (
           <SavedFeed insetsBottom={insets.bottom} />
         ) : (
           <DiscoverFeed insetsBottom={insets.bottom} />

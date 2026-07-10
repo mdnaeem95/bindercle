@@ -5,8 +5,10 @@ import { useBinderEngagement, useToggleLike, useToggleSave } from '@/hooks/useBi
 import { useCardsForBinder } from '@/hooks/useCards';
 import { type PageWithCount, usePagesForBinder } from '@/hooks/usePages';
 import { useReorderPages } from '@/hooks/useReorderPages';
+import { trackEvent } from '@/lib/observability';
 import { BINDER_LAYOUT_COLUMNS, type BinderLayout } from '@/lib/validators/binder';
 import { useAuthStore } from '@/stores/auth';
+import { useRequireAuth } from '@/stores/authGate';
 import {
   type AccentColor,
   Button,
@@ -47,9 +49,17 @@ export default function BinderDetailScreen() {
   const { data: allCards } = useCardsForBinder(id);
   const reorderPages = useReorderPages();
   const viewerId = useAuthStore((s) => s.user?.id);
+  const requireAuth = useRequireAuth();
   const { data: engagement } = useBinderEngagement(id);
   const toggleLike = useToggleLike();
   const toggleSave = useToggleSave();
+
+  // Pre-auth funnel: a public binder view is a core browse leg (anon or not).
+  useEffect(() => {
+    if (binder?.id) {
+      trackEvent('binder_viewed', { binder_id: binder.id, anonymous: !viewerId });
+    }
+  }, [binder?.id, viewerId]);
 
   const [reorganizing, setReorganizing] = useState(false);
   const [draftPages, setDraftPages] = useState<PageWithCount[]>([]);
@@ -234,10 +244,12 @@ export default function BinderDetailScreen() {
                 <View style={{ flexDirection: 'row', gap: 8 }}>
                   <Pressable
                     onPress={() =>
-                      toggleLike.mutate({
-                        binder_id: binder.id,
-                        currentlyLiked: !!engagement?.isLiked,
-                      })
+                      requireAuth('like', () =>
+                        toggleLike.mutate({
+                          binder_id: binder.id,
+                          currentlyLiked: !!engagement?.isLiked,
+                        }),
+                      )
                     }
                     hitSlop={12}
                     style={{
@@ -264,10 +276,12 @@ export default function BinderDetailScreen() {
                   </Pressable>
                   <Pressable
                     onPress={() =>
-                      toggleSave.mutate({
-                        binder_id: binder.id,
-                        currentlySaved: !!engagement?.isSaved,
-                      })
+                      requireAuth('save', () =>
+                        toggleSave.mutate({
+                          binder_id: binder.id,
+                          currentlySaved: !!engagement?.isSaved,
+                        }),
+                      )
                     }
                     hitSlop={12}
                     style={{
@@ -433,6 +447,15 @@ export default function BinderDetailScreen() {
                   <Text variant="caption" tone="secondary" align="center">
                     add a page and start dropping cards in.
                   </Text>
+                  {viewerId === binder.owner_id && (
+                    <Button
+                      variant="primary"
+                      size="sm"
+                      onPress={() => router.push(`/binders/${binder.id}/pages/new`)}
+                    >
+                      add a page
+                    </Button>
+                  )}
                 </View>
               ) : reorganizing ? (
                 <View onLayout={onGridLayout}>

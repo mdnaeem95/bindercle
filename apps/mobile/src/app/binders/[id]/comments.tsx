@@ -7,6 +7,7 @@ import {
   useDeleteComment,
 } from '@/hooks/useComments';
 import { useAuthStore } from '@/stores/auth';
+import { useRequireAuth } from '@/stores/authGate';
 import { Avatar, Surface, Text, useTheme } from '@foilio/ui';
 import { router, useLocalSearchParams } from 'expo-router';
 import { ArrowLeft, Flag, MessageCircle, Send, Trash2 } from 'lucide-react-native';
@@ -28,6 +29,7 @@ export default function BinderCommentsScreen() {
   const insets = useSafeAreaInsets();
   const { id } = useLocalSearchParams<{ id: string }>();
   const viewerId = useAuthStore((s) => s.user?.id);
+  const requireAuth = useRequireAuth();
   const { data: rawComments, isLoading } = useComments(id);
   const blockedIds = useBlockedUserIdSet();
   const comments = rawComments?.filter((c) => !blockedIds.has(c.user_id));
@@ -35,20 +37,24 @@ export default function BinderCommentsScreen() {
   const deleteComment = useDeleteComment();
   const [draft, setDraft] = useState('');
 
-  const onSend = async () => {
+  const onSend = () => {
     const trimmed = draft.trim();
     if (!id || !trimmed) return;
     if (trimmed.length > 500) {
       Alert.alert('Too long', 'Comments are limited to 500 characters.');
       return;
     }
-    try {
-      await addComment.mutateAsync({ binder_id: id, body: trimmed });
-      setDraft('');
-    } catch (e) {
-      const err = e as { message?: string };
-      Alert.alert("Couldn't post", err.message ?? 'Try again.');
-    }
+    // Wall at the action: an anonymous viewer gets the sign-in prompt here, and
+    // the typed draft is preserved — resume replays this closure post-sign-in.
+    requireAuth('comment', async () => {
+      try {
+        await addComment.mutateAsync({ binder_id: id, body: trimmed });
+        setDraft('');
+      } catch (e) {
+        const err = e as { message?: string };
+        Alert.alert("Couldn't post", err.message ?? 'Try again.');
+      }
+    });
   };
 
   const onDelete = (comment: CommentWithAuthor) => {
@@ -131,69 +137,66 @@ export default function BinderCommentsScreen() {
             />
           )}
 
-          {/* Composer */}
-          {viewerId && (
+          {/* Composer — shown to anonymous viewers too; tapping send trips the
+              sign-in wall (draft preserved through the prompt). */}
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'flex-end',
+              gap: 8,
+              paddingHorizontal: 16,
+              paddingTop: 8,
+              paddingBottom: insets.bottom + 8,
+              borderTopWidth: 1,
+              borderTopColor: theme.colors.borderSubtle,
+              backgroundColor: theme.colors.bgBase,
+            }}
+          >
             <View
               style={{
-                flexDirection: 'row',
-                alignItems: 'flex-end',
-                gap: 8,
-                paddingHorizontal: 16,
-                paddingTop: 8,
-                paddingBottom: insets.bottom + 8,
-                borderTopWidth: 1,
-                borderTopColor: theme.colors.borderSubtle,
-                backgroundColor: theme.colors.bgBase,
+                flex: 1,
+                borderRadius: 20,
+                paddingHorizontal: 14,
+                paddingVertical: 8,
+                backgroundColor: theme.colors.bgElevated1,
+                borderWidth: 1,
+                borderColor: theme.colors.borderSubtle,
               }}
             >
-              <View
+              <TextInput
+                value={draft}
+                onChangeText={setDraft}
+                placeholder="Add a comment…"
+                placeholderTextColor={theme.colors.textTertiary}
+                multiline
+                maxLength={500}
                 style={{
-                  flex: 1,
-                  borderRadius: 20,
-                  paddingHorizontal: 14,
-                  paddingVertical: 8,
-                  backgroundColor: theme.colors.bgElevated1,
-                  borderWidth: 1,
-                  borderColor: theme.colors.borderSubtle,
+                  color: theme.colors.textPrimary,
+                  fontSize: 15,
+                  maxHeight: 100,
                 }}
-              >
-                <TextInput
-                  value={draft}
-                  onChangeText={setDraft}
-                  placeholder="Add a comment…"
-                  placeholderTextColor={theme.colors.textTertiary}
-                  multiline
-                  maxLength={500}
-                  style={{
-                    color: theme.colors.textPrimary,
-                    fontSize: 15,
-                    maxHeight: 100,
-                  }}
-                />
-              </View>
-              <Pressable
-                onPress={onSend}
-                disabled={!draft.trim() || addComment.isPending}
-                style={({ pressed }) => ({
-                  width: 36,
-                  height: 36,
-                  borderRadius: 18,
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  backgroundColor: draft.trim()
-                    ? theme.colors.textPrimary
-                    : theme.colors.bgElevated2,
-                  opacity: pressed ? 0.8 : 1,
-                })}
-              >
-                <Send
-                  size={16}
-                  color={draft.trim() ? theme.colors.bgBase : theme.colors.textTertiary}
-                  strokeWidth={2}
-                />
-              </Pressable>
+              />
             </View>
-          )}
+            <Pressable
+              onPress={onSend}
+              disabled={!draft.trim() || addComment.isPending}
+              style={({ pressed }) => ({
+                width: 36,
+                height: 36,
+                borderRadius: 18,
+                alignItems: 'center',
+                justifyContent: 'center',
+                backgroundColor: draft.trim() ? theme.colors.textPrimary : theme.colors.bgElevated2,
+                opacity: pressed ? 0.8 : 1,
+              })}
+            >
+              <Send
+                size={16}
+                color={draft.trim() ? theme.colors.bgBase : theme.colors.textTertiary}
+                strokeWidth={2}
+              />
+            </Pressable>
+          </View>
         </SafeAreaView>
       </KeyboardAvoidingView>
     </Surface>

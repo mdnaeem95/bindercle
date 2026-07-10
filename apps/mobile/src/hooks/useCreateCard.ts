@@ -6,6 +6,7 @@ import { supabase } from '@/lib/supabase';
 import { uploadCardPhoto } from '@/lib/uploads';
 import type { CardCondition } from '@/lib/validators/card';
 import { useAuthStore } from '@/stores/auth';
+import { useToast } from '@/stores/toast';
 import type { Card } from '@foilio/api-client';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
@@ -116,6 +117,11 @@ export function useCreateCard() {
         is_first: context?.isFirst ?? false,
         via: 'empty_slot',
       });
+      // First-card payoff (onboarding-copy §4): affirm the moment the very
+      // first card lands. Only on the user's first-ever card.
+      if (context?.isFirst) {
+        useToast.getState().show("first card's in. this is the part that gets good.");
+      }
       queryClient.invalidateQueries({ queryKey: cardsForPageQueryKey(input.page_id) });
       queryClient.invalidateQueries({ queryKey: cardsForBinderQueryKey(card.binder_id) });
       queryClient.invalidateQueries({ queryKey: pagesForBinderQueryKey(card.binder_id) });

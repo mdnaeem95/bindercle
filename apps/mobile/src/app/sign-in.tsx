@@ -3,7 +3,7 @@ import { trackEvent } from '@/lib/observability';
 import { useAuthStore } from '@/stores/auth';
 import { BindercleWordmark, Surface, Text, useTheme } from '@foilio/ui';
 import * as AppleAuthentication from 'expo-apple-authentication';
-import { Redirect } from 'expo-router';
+import { Redirect, router } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, Alert, Platform, Pressable, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -110,6 +110,17 @@ export default function SignInScreen() {
           <Text variant="caption" tone="tertiary" align="center" style={{ marginTop: 8 }}>
             By continuing, you agree to our Terms and Privacy Policy.
           </Text>
+
+          {/* Escape hatch — never strand anyone on the sign-in screen. */}
+          <Pressable
+            onPress={() => router.replace('/')}
+            hitSlop={8}
+            style={{ alignItems: 'center', paddingVertical: 8 }}
+          >
+            <Text variant="caption" tone="secondary">
+              just browsing? keep looking around
+            </Text>
+          </Pressable>
         </View>
       </SafeAreaView>
     </Surface>
