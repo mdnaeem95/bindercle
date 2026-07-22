@@ -360,7 +360,10 @@ function PageBody({
         onCardPress={(cardId) => router.push(`/cards/${cardId}`)}
         onEmptySlotPress={
           isOwner
-            ? (position) => router.push(`/pages/${page.id}/cards/new?position=${position}`)
+            ? (position) =>
+                router.push(
+                  `/pages/${page.id}/cards/new?position=${position}&binder_id=${page.binder_id}`,
+                )
             : undefined
         }
       />

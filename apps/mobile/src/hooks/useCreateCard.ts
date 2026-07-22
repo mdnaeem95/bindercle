@@ -110,12 +110,17 @@ export function useCreateCard() {
       return card;
     },
     onSuccess: (card, input, context) => {
+      // Mirror render precedence (photos win over catalog art) so the event
+      // reflects what the user will actually see in the grid.
+      const imageSource: 'photo' | 'catalog' | 'none' =
+        input.photo_uris.length > 0 ? 'photo' : input.tcg_card_id ? 'catalog' : 'none';
       trackEvent('card_added', {
         binder_id: card.binder_id,
         page_id: input.page_id,
         page_position: card.position,
         is_first: context?.isFirst ?? false,
         via: 'empty_slot',
+        image_source: imageSource,
       });
       // First-card payoff (onboarding-copy §4): affirm the moment the very
       // first card lands. Only on the user's first-ever card.
