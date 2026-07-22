@@ -1,11 +1,13 @@
-# Bindercle — Brand Identity v1.1
+# Bindercle — Brand Identity v1.2
 
-*Visual direction: **Holo Luxe** (locked 2026-05-22). Behavioral direction: **playful warmth** (revised 2026-05-23).*
+*Visual direction: **Holo Luxe** (locked 2026-05-22). Behavioral direction: **playful warmth** (revised 2026-05-23). Heading case: **lowercase** (resolved 2026-07-12).*
 
 > The visual system (palette, type, tokens) stays Holo Luxe — dark, refined, considered.
 > The *behavior* (voice, copy, microinteractions, empty states) leans warm and playful — this is a Pinterest-style showcase for *cute themed collections*, not a museum app.
 
 **Note on the v1.0 → v1.1 shift:** the original spec leaned hard on restraint ("refined, luminous, insider, quietly playful"). After early prototyping, the app started feeling closer to a premium TCG catalog than a place to show off "Pokemon dabbing" master sets. v1.1 keeps the visual identity that's already in code — the dark Holo Luxe canvas reads beautifully against bright user content — but loosens the *voice* so the app actually invites the playful curation the product is supposed to celebrate.
+
+**Note on the v1.1 → v1.2 shift (2026-07-12):** v1.1 contradicted itself on heading case — §2's Playful row said *lowercase headings* while §3's voice rules said *Title Case for screen headers*. Shipped product copy (the v1.0.1 onboarding + empty-state wave, June 2026) followed lowercase and is the reference implementation of the voice. v1.2 resolves the conflict: **lowercase wins, everywhere in-app**, with the narrow exceptions listed in §3. No visual-token, color, or type changes.
 
 > All values in this document are build-ready — they should flow directly into design tokens, component variables, and Skia shaders.
 
@@ -50,7 +52,7 @@ The job of the visual identity is to make user content look gorgeous against it.
 
 - **Warm, not corporate.** Talk like a friend who's also a collector. Use contractions. Use the joke if it lands.
 - **Insider-friendly.** Use collector lingo (pulls, hits, slabs, sleeves) without irony — but also without gatekeeping. Adjacent fans should still feel welcome.
-- **Title Case for screen headers and navigation.** Sentence case in body copy and microcopy. ALL-CAPS only for short badges. Title Case keeps the chrome legible and on-brand for a polished app; the warmth lives in the body, not the headers.
+- **lowercase headings, everywhere in-app** *(resolved v1.2 — supersedes the v1.1 "Title Case for screen headers" rule)*. Screen headers, navigation, section titles, empty states, buttons, toasts, prompts, push notifications: lowercase sentence fragments in the warm voice ("make my first binder", "empty binder, full potential"). Sentence case in body copy. ALL-CAPS only for short badges. **Exceptions:** proper nouns (Bindercle, Pokemon, Apple, Google) and card/set names as printed; App Store Connect metadata (follows Apple's conventions, not this rule); legal pages (privacy / terms / support); the wordmark + tagline lockup ("Bigger on the inside.") — a designed asset, render as designed.
 - **Specific, not generic.** "dabbing Pokemon master set" beats "your trading card collection." Show, don't lecture.
 - **Short.** Cut "actually", "just", "simply", "amazing", "incredible." A few well-chosen words > a polished sentence.
 - **Emoji sparingly, intentionally.** ✨ 🌱 💫 📸 🥺 — yes, when they earn it. Never a wall of them.
@@ -60,8 +62,8 @@ The job of the visual identity is to make user content look gorgeous against it.
 | Context | Tone | Example |
 |---------|------|---------|
 | Onboarding | Warm, inviting | *"show off your cute collection"* |
-| Empty state (own binders) | Playful with a nudge | *"nothing here yet 🌱 — Make a binder of dabbing Pokemon. Or shiny Eevees. The theme is the joke."* |
-| Empty state (in a binder) | Encouraging, specific | *"empty binder, full potential 💫 — Drop in a card. Tell its story. Build the vibe."* |
+| Empty state (own binders) | Playful with a nudge | *"nothing here yet 🌱 — make a binder of dabbing Pokemon. or shiny Eevees. the theme is the joke."* |
+| Empty state (in a binder) | Encouraging, specific | *"empty binder, full potential 💫 — drop in a card. tell its story. build the vibe."* |
 | Empty state (discovery) | Quiet redirect | *"quiet over here. try a different tag."* |
 | Success — small | Soft confirm | *"saved ✨"* / *"added"* |
 | Success — milestone | Acknowledge with character | *"that's a master set 🏆 — 151/151"* |

@@ -102,10 +102,10 @@ Over-exposure is the risk. Using the project **anon** key (e.g. a REST call with
 
 ## W2. Anonymous browse (Item 1b — cold-launch / §B)
 
-- [ ] **Fresh install, signed out, cold launch**: app lands on the **Discover feed**, NOT `/sign-in`. (Mine/Saved chips hidden; a "Sign in" button shows in the header.)
-- [ ] Anon can open: a public binder detail, a page detail, a card detail, `/users/[id]`, `/tags/[slug]`, search — all read-only, no crash, no permission errors in logs.
-- [ ] Anon tapping the **Create**, **Notifications**, or **Profile** tab opens the **dismissable** sign-in prompt and stays on the current tab — none of them strand you on a full-screen `/sign-in` (the original bug). Dismiss → still browsing.
-- [ ] **No dead-ends**: from `/sign-in` (reached via the home "Sign in" button) the `just browsing? keep looking around` link returns to the feed; signing **out** from Settings lands on the anon home feed, not `/sign-in`.
+- [Y] **Fresh install, signed out, cold launch**: app lands on the **Discover feed**, NOT `/sign-in`. (Mine/Saved chips hidden; a "Sign in" button shows in the header.)
+- [Y] Anon can open: a public binder detail, a page detail, a card detail, `/users/[id]`, `/tags/[slug]`, search — all read-only, no crash, no permission errors in logs.
+- [Y] Anon tapping the **Create**, **Notifications**, or **Profile** tab opens the **dismissable** sign-in prompt and stays on the current tab — none of them strand you on a full-screen `/sign-in` (the original bug). Dismiss → still browsing.
+- [Y] **No dead-ends**: from `/sign-in` (reached via the home "Sign in" button) the `just browsing? keep looking around` link returns to the feed; signing **out** from Settings lands on the anon home feed, not `/sign-in`.
 - [Y] PostHog: `feed_viewed {anonymous:true}` and `binder_viewed {anonymous:true}` fire while signed out. _API-verified 2026-07-10: feed_viewed anon=5/nonanon=1, binder_viewed anon=4/nonanon=1._
 
 ## W3. The wall at the action (Item 1c) + resume
@@ -122,13 +122,13 @@ For each, signed **out**, the contextual sheet appears (not a hard redirect), an
 ## W4. Continuous funnel (Item 1d — identify stitch)
 
 - [Y] In PostHog, a single anonymous session that signs in shows **one continuous person**: `feed_viewed`(anon) → `signin_prompt_shown` → `sign_in_attempted` → `sign_in_succeeded` … all on the same `person_id` (anon→identified merged). _API-verified 2026-07-10: person `4f2fb497…` carries 3 anon feed_viewed + 2 anon binder_viewed + 5 prompts + the sign_in_succeeded on one person_id — the stitch chains._
-- [ ] Cold-relaunch while **signed out** does not mint a brand-new anon id every launch (no `reset()` on a session-less boot) — the anon person persists across launches until sign-in or explicit sign-out.
-- [ ] Add to the Activation & Sign-in Health dashboard (777504): success rate = `sign_in_succeeded / sign_in_attempted` vs the ~44% baseline, plus browse→prompt→attempt.
+- [Y] Cold-relaunch while **signed out** does not mint a brand-new anon id every launch (no `reset()` on a session-less boot) — the anon person persists across launches until sign-in or explicit sign-out.
+- [Y] Add to the Activation & Sign-in Health dashboard (777504): success rate = `sign_in_succeeded / sign_in_attempted` vs the ~44% baseline, plus browse→prompt→attempt.
 
 ## W5. Page export (Item 2)
 
 - [Y] On a page detail, the **share** icon (header) exports: tap → spinner → OS share sheet opens with the composed PNG URL.
-- [ ] **RE-VERIFY after redeploy** — the image is a faithful grid **and carries the wordmark + owner `@handle`** (the distribution payload). _First smoke showed a plain bar: the default font URL 404'd. Fixed — default is now `@expo-google-fonts/inter@0.2.3/Inter_700Bold.ttf` (verified 200 + valid TTF). Redeploy `page-export` and confirm the text renders._
+- [Y] **RE-VERIFY after redeploy** — the image is a faithful grid **and carries the wordmark + owner `@handle`** (the distribution payload). _First smoke showed a plain bar: the default font URL 404'd. Fixed — default is now `@expo-google-fonts/inter@0.2.3/Inter_700Bold.ttf` (verified 200 + valid TTF). Redeploy `page-export` and confirm the text renders._
 - [Y] **Anon** (signed out) can export a **public** page (share loop works without an account).
 - [Y] A **private** page is not exportable by a non-owner (edge fn returns 404 under RLS).
 - [Y] PostHog: `page_exported {surface:'page_detail', shared}` fires. _API-verified 2026-07-10: surface=page_detail, both shared=true and shared=false seen._
