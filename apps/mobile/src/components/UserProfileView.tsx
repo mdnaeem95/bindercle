@@ -4,6 +4,7 @@ import { useIsBlocked, useToggleBlock } from '@/hooks/useBlockUser';
 import { type PublicBinder, usePublicBindersByUser, useUserProfile } from '@/hooks/useUserProfile';
 import { useToggleFollow, useUserSocialStats } from '@/hooks/useUserSocialStats';
 import { useAuthStore } from '@/stores/auth';
+import { useRequireAuth } from '@/stores/authGate';
 import { type AccentColor, Avatar, BinderCard, Button, Surface, Text, useTheme } from '@foilio/ui';
 import { router } from 'expo-router';
 import { ArrowLeft, Link as LinkIcon, MoreHorizontal, Settings } from 'lucide-react-native';
@@ -34,6 +35,7 @@ export function UserProfileView({ userId, hideBackButton }: UserProfileViewProps
   const { data: profile, isLoading: profileLoading } = useUserProfile(userId);
   const { data: stats } = useUserSocialStats(userId);
   const toggleFollow = useToggleFollow();
+  const requireAuth = useRequireAuth();
   const { data: isBlocked } = useIsBlocked(userId);
   const toggleBlock = useToggleBlock();
   const [reportOpen, setReportOpen] = useState(false);
@@ -146,22 +148,27 @@ export function UserProfileView({ userId, hideBackButton }: UserProfileViewProps
                   Edit profile
                 </Button>
               ) : (
-                !!selfId && (
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                    <Button
-                      variant={stats?.isFollowing || isBlocked ? 'ghost' : 'primary'}
-                      size="sm"
-                      loading={toggleFollow.isPending}
-                      disabled={isBlocked}
-                      onPress={() =>
+                // Shown to anonymous viewers too — tapping Follow trips the
+                // sign-in wall (the want is created by browsing; the wall lands
+                // at the follow). The Block/Report menu stays authed-only.
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                  <Button
+                    variant={stats?.isFollowing || isBlocked ? 'ghost' : 'primary'}
+                    size="sm"
+                    loading={toggleFollow.isPending}
+                    disabled={isBlocked}
+                    onPress={() =>
+                      requireAuth('follow', () =>
                         toggleFollow.mutate({
                           user_id: profile.id,
                           currentlyFollowing: !!stats?.isFollowing,
-                        })
-                      }
-                    >
-                      {isBlocked ? 'Blocked' : stats?.isFollowing ? 'Following' : 'Follow'}
-                    </Button>
+                        }),
+                      )
+                    }
+                  >
+                    {isBlocked ? 'Blocked' : stats?.isFollowing ? 'Following' : 'Follow'}
+                  </Button>
+                  {!!selfId && (
                     <Pressable
                       onPress={() => {
                         Alert.alert(
@@ -203,8 +210,8 @@ export function UserProfileView({ userId, hideBackButton }: UserProfileViewProps
                         strokeWidth={2}
                       />
                     </Pressable>
-                  </View>
-                )
+                  )}
+                </View>
               )}
 
               {profile.bio && (
@@ -241,9 +248,14 @@ export function UserProfileView({ userId, hideBackButton }: UserProfileViewProps
                   {isSelf ? 'no binders yet.' : 'no public binders yet.'}
                 </Text>
                 {isSelf ? (
-                  <Text variant="caption" tone="tertiary" align="center">
-                    the first one's the fun part. start with the cards you'd grab first.
-                  </Text>
+                  <>
+                    <Text variant="caption" tone="tertiary" align="center">
+                      the first one's the fun part. start with the cards you'd grab first.
+                    </Text>
+                    <Button variant="primary" size="sm" onPress={() => router.push('/binders/new')}>
+                      new binder
+                    </Button>
+                  </>
                 ) : null}
               </View>
             )

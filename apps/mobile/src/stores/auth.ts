@@ -20,15 +20,21 @@ interface AuthState {
   signOut: () => Promise<void>;
 }
 
-function applySession(session: Session | null) {
+function identifyFromSession(session: Session | null) {
   if (session?.user) {
+    // identify() stitches the current anonymous PostHog distinct_id onto the
+    // user (anon→identified merge), so the pre-auth funnel legs (app open,
+    // feed_viewed, signin_prompt_shown, …) chain continuously into the
+    // signed-in identity. See w27 Item 1d.
     identifyUser(session.user.id, {
       email: session.user.email ?? null,
       provider: session.user.app_metadata.provider ?? null,
     });
-  } else {
-    clearUserIdentity();
   }
+  // NB: intentionally no reset() here for the null-session case. A session-less
+  // launch is an anonymous browser (value-before-wall) — resetting on every
+  // cold start would mint a fresh anon id each launch and fragment the
+  // pre-auth funnel. We only reset on an explicit SIGNED_OUT (below).
 }
 
 export const useAuthStore = create<AuthState>((set) => ({
@@ -40,7 +46,7 @@ export const useAuthStore = create<AuthState>((set) => ({
     const {
       data: { session },
     } = await supabase.auth.getSession();
-    applySession(session);
+    identifyFromSession(session);
     set({
       session,
       user: session?.user ?? null,
@@ -50,7 +56,13 @@ export const useAuthStore = create<AuthState>((set) => ({
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event, nextSession) => {
-      applySession(nextSession);
+      if (event === 'SIGNED_OUT') {
+        // Only wipe the PostHog/Sentry identity on an explicit sign-out; the
+        // viewer becomes a fresh anonymous browser afterwards.
+        clearUserIdentity();
+      } else {
+        identifyFromSession(nextSession);
+      }
       if (event === 'SIGNED_IN' && nextSession?.user) {
         trackEvent('sign_in_succeeded', {
           provider: nextSession.user.app_metadata.provider ?? null,

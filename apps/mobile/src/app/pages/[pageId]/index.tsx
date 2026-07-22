@@ -3,14 +3,17 @@ import { CardLayout } from '@/components/CardLayout';
 import { useBinder } from '@/hooks/useBinder';
 import { type CardWithExtras, useCardsForBinder } from '@/hooks/useCards';
 import { useDeleteCard } from '@/hooks/useDeleteCard';
+import { useExportPage } from '@/hooks/usePageExport';
 import { type PageWithCount, usePage, usePagesForBinder } from '@/hooks/usePages';
 import { useReorderCards } from '@/hooks/useReorderCards';
 import type { BinderLayout } from '@/lib/validators/binder';
 import { useAuthStore } from '@/stores/auth';
 import { type AccentColor, Button, Surface, Text, accentSolid, useTheme } from '@foilio/ui';
 import { router, useLocalSearchParams } from 'expo-router';
+import { Share2 } from 'lucide-react-native';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
+  ActivityIndicator,
   Alert,
   FlatList,
   type LayoutChangeEvent,
@@ -35,6 +38,7 @@ export default function PageDetailScreen() {
   const { data: allCards } = useCardsForBinder(initialPage?.binder_id);
   const reorderCards = useReorderCards();
   const deleteCard = useDeleteCard();
+  const exportPage = useExportPage();
   const viewerId = useAuthStore((s) => s.user?.id);
 
   const initialIndex = useMemo(() => {
@@ -136,6 +140,19 @@ export default function PageDetailScreen() {
     setGridWidth(e.nativeEvent.layout.width);
   };
 
+  // Server-composed page export → OS share sheet. Available to any viewer of a
+  // visible page (owner or not, signed in or anon) — every share carries the
+  // wordmark + owner @handle back out.
+  const onShare = () => {
+    if (!currentPage) return;
+    exportPage.mutate(
+      { page_id: currentPage.id, surface: 'page_detail' },
+      {
+        onError: (e) => Alert.alert("Couldn't create image", e.message ?? 'Try again in a moment.'),
+      },
+    );
+  };
+
   const onPagerScrollEnd = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
     const idx = Math.round(e.nativeEvent.contentOffset.x / screenWidth);
     if (idx !== currentIndex) setCurrentIndex(idx);
@@ -193,14 +210,31 @@ export default function PageDetailScreen() {
                   Done
                 </Text>
               </Pressable>
-            ) : isOwner && currentPage ? (
-              <Pressable onPress={() => router.push(`/pages/${currentPage.id}/edit`)} hitSlop={12}>
-                <Text variant="body" tone="secondary">
-                  Edit
-                </Text>
-              </Pressable>
             ) : (
-              <View style={{ width: 32 }} />
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 16 }}>
+                <Pressable
+                  onPress={onShare}
+                  hitSlop={12}
+                  disabled={exportPage.isPending}
+                  accessibilityLabel="Share this page"
+                >
+                  {exportPage.isPending ? (
+                    <ActivityIndicator size="small" color={theme.colors.textSecondary} />
+                  ) : (
+                    <Share2 size={20} color={theme.colors.textSecondary} strokeWidth={1.8} />
+                  )}
+                </Pressable>
+                {isOwner && currentPage && (
+                  <Pressable
+                    onPress={() => router.push(`/pages/${currentPage.id}/edit`)}
+                    hitSlop={12}
+                  >
+                    <Text variant="body" tone="secondary">
+                      Edit
+                    </Text>
+                  </Pressable>
+                )}
+              </View>
             )}
           </View>
 
@@ -326,7 +360,10 @@ function PageBody({
         onCardPress={(cardId) => router.push(`/cards/${cardId}`)}
         onEmptySlotPress={
           isOwner
-            ? (position) => router.push(`/pages/${page.id}/cards/new?position=${position}`)
+            ? (position) =>
+                router.push(
+                  `/pages/${page.id}/cards/new?position=${position}&binder_id=${page.binder_id}`,
+                )
             : undefined
         }
       />

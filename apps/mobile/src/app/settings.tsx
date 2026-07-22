@@ -29,7 +29,9 @@ export default function SettingsScreen() {
         onPress: async () => {
           try {
             await signOut();
-            router.replace('/sign-in');
+            // Land on the anonymous home feed, not the /sign-in dead-end — the
+            // user can keep browsing and re-auth via the header or an action.
+            router.replace('/');
           } catch (e) {
             const err = e as { message?: string };
             Alert.alert("Couldn't sign out", err.message ?? 'Try again.');
@@ -63,7 +65,7 @@ export default function SettingsScreen() {
                       await deleteAccount.mutateAsync();
                       // Session is now invalid; sign out cleans up local state.
                       await signOut().catch(() => {});
-                      router.replace('/sign-in');
+                      router.replace('/');
                     } catch (e) {
                       const err = e as { message?: string };
                       Alert.alert("Couldn't delete account", err.message ?? 'Try again.');

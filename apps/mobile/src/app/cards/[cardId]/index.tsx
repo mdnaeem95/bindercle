@@ -97,7 +97,7 @@ export default function CardDetailScreen() {
           >
             <Camera size={12} color={theme.colors.textTertiary} strokeWidth={1.8} />
             <Text variant="caption" tone="tertiary">
-              Official art — your own photo will replace this
+              official art — your own photo will replace this
             </Text>
           </View>
         )}

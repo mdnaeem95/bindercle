@@ -1,6 +1,7 @@
 import { TcgCardSuggestions } from '@/components/TcgCardSuggestions';
 import { useCreateCard } from '@/hooks/useCreateCard';
 import { mirrorTcgCard } from '@/lib/mirrorTcgCard';
+import { trackEvent } from '@/lib/observability';
 import { type TcgApiCard, getTcgCardById } from '@/lib/pokemonTcg';
 import { pickImages, takePhoto } from '@/lib/uploads';
 import {
@@ -13,7 +14,7 @@ import { Button, ChipGroup, Input, Surface, Text, useTheme } from '@foilio/ui';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { router, useLocalSearchParams } from 'expo-router';
 import { CheckCircle2 } from 'lucide-react-native';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import {
   ActionSheetIOS,
@@ -32,15 +33,37 @@ const PHOTO_LIMIT = 6;
 export default function NewCardScreen() {
   const theme = useTheme();
   const insets = useSafeAreaInsets();
-  const { pageId, position: positionParam } = useLocalSearchParams<{
+  const {
+    pageId,
+    position: positionParam,
+    binder_id: binderIdParam,
+  } = useLocalSearchParams<{
     pageId: string;
     position?: string;
+    binder_id?: string;
   }>();
   const targetPosition = positionParam ? Number.parseInt(positionParam, 10) : undefined;
+
+  // Funnel step between page_created and card_added: splits "never entered the
+  // add-card screen" (discoverability) from "entered and abandoned" (ceremony).
+  // Fire once per screen open — deps intentionally empty.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: fire once per mount
+  useEffect(() => {
+    trackEvent('card_add_started', {
+      binder_id: binderIdParam ?? null,
+      page_id: pageId ?? null,
+      position: targetPosition ?? null,
+    });
+  }, []);
   const createCard = useCreateCard();
   const [photos, setPhotos] = useState<string[]>([]);
   const [tcgCardId, setTcgCardId] = useState<string | null>(null);
   const [tcgCardArt, setTcgCardArt] = useState<string | null>(null);
+  // Photos are out of the mainline add flow — catalog art carries every render
+  // surface. The picker lives behind an escape hatch that serves both custom/
+  // altered art and catalog misses (cards TCGdex doesn't have, whose only
+  // visual path is a user photo).
+  const [showPhotoHatch, setShowPhotoHatch] = useState(false);
 
   const {
     control,
@@ -213,76 +236,7 @@ export default function NewCardScreen() {
             contentContainerStyle={{ padding: 24, gap: 24, paddingBottom: 24 + insets.bottom }}
             keyboardShouldPersistTaps="handled"
           >
-            {/* Photos */}
-            <View style={{ gap: 8 }}>
-              <Text variant="caption" tone="secondary">
-                Photos ({photos.length}/{PHOTO_LIMIT})
-              </Text>
-              <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={{ gap: 8 }}
-              >
-                {photos.map((uri, index) => (
-                  <View key={uri} style={{ position: 'relative' }}>
-                    <Image
-                      source={{ uri }}
-                      style={{
-                        width: 100,
-                        height: 140,
-                        borderRadius: 8,
-                        backgroundColor: theme.colors.bgElevated1,
-                      }}
-                      resizeMode="cover"
-                    />
-                    <Pressable
-                      onPress={() => removePhoto(index)}
-                      hitSlop={6}
-                      style={{
-                        position: 'absolute',
-                        top: 4,
-                        right: 4,
-                        width: 24,
-                        height: 24,
-                        borderRadius: 12,
-                        backgroundColor: 'rgba(10,10,15,0.7)',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                      }}
-                    >
-                      <Text variant="caption" style={{ color: '#F8F8F2' }}>
-                        ×
-                      </Text>
-                    </Pressable>
-                  </View>
-                ))}
-                {canAddPhoto && (
-                  <Pressable
-                    onPress={onAddPhoto}
-                    style={{
-                      width: 100,
-                      height: 140,
-                      borderRadius: 8,
-                      borderWidth: 1,
-                      borderStyle: 'dashed',
-                      borderColor: theme.colors.borderDefault,
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      backgroundColor: theme.colors.bgElevated1,
-                    }}
-                  >
-                    <Text variant="display2" tone="tertiary">
-                      +
-                    </Text>
-                    <Text variant="caption" tone="tertiary">
-                      Add
-                    </Text>
-                  </Pressable>
-                )}
-              </ScrollView>
-            </View>
-
-            {/* Name + TCG picker */}
+            {/* Name + TCG picker — the fast path leads: search + tap + save */}
             <View style={{ gap: 8 }}>
               <Controller
                 control={control}
@@ -340,8 +294,8 @@ export default function NewCardScreen() {
                     </View>
                     <Text variant="caption" tone="tertiary" numberOfLines={2}>
                       {photos.length === 0
-                        ? 'Official art will display until you add your own.'
-                        : 'Your photos will be shown.'}
+                        ? 'official art shows automatically.'
+                        : 'your photos will be shown.'}
                     </Text>
                   </View>
                   <Pressable onPress={onUnlinkTcgCard} hitSlop={6}>
@@ -354,6 +308,91 @@ export default function NewCardScreen() {
                 <TcgCardSuggestions query={nameQuery} onSelect={onPickTcgCard} />
               )}
             </View>
+
+            {/* Photo escape hatch. Default flow is catalog-only (search + tap +
+                save); the picker reveals only on demand — for a custom/altered
+                card or a catalog miss. */}
+            {showPhotoHatch || photos.length > 0 ? (
+              <View style={{ gap: 8 }}>
+                <View style={{ gap: 4 }}>
+                  <Text variant="caption" tone="secondary">
+                    your photo
+                    {photos.length > 0 ? ` · ${photos.length}/${PHOTO_LIMIT}` : ''}
+                  </Text>
+                  <Text variant="caption" tone="tertiary">
+                    for a custom or altered card, or one the catalog doesn't have.
+                  </Text>
+                </View>
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  contentContainerStyle={{ gap: 8 }}
+                >
+                  {photos.map((uri, index) => (
+                    <View key={uri} style={{ position: 'relative' }}>
+                      <Image
+                        source={{ uri }}
+                        style={{
+                          width: 100,
+                          height: 140,
+                          borderRadius: 8,
+                          backgroundColor: theme.colors.bgElevated1,
+                        }}
+                        resizeMode="cover"
+                      />
+                      <Pressable
+                        onPress={() => removePhoto(index)}
+                        hitSlop={6}
+                        style={{
+                          position: 'absolute',
+                          top: 4,
+                          right: 4,
+                          width: 24,
+                          height: 24,
+                          borderRadius: 12,
+                          backgroundColor: 'rgba(10,10,15,0.7)',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                        }}
+                      >
+                        <Text variant="caption" style={{ color: '#F8F8F2' }}>
+                          ×
+                        </Text>
+                      </Pressable>
+                    </View>
+                  ))}
+                  {canAddPhoto && (
+                    <Pressable
+                      onPress={onAddPhoto}
+                      style={{
+                        width: 100,
+                        height: 140,
+                        borderRadius: 8,
+                        borderWidth: 1,
+                        borderStyle: 'dashed',
+                        borderColor: theme.colors.borderDefault,
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        backgroundColor: theme.colors.bgElevated1,
+                      }}
+                    >
+                      <Text variant="display2" tone="tertiary">
+                        +
+                      </Text>
+                      <Text variant="caption" tone="tertiary">
+                        Add
+                      </Text>
+                    </Pressable>
+                  )}
+                </ScrollView>
+              </View>
+            ) : (
+              <Pressable onPress={() => setShowPhotoHatch(true)} hitSlop={8}>
+                <Text variant="caption" tone="tertiary">
+                  custom card, or can't find it? add your own photo
+                </Text>
+              </Pressable>
+            )}
 
             {/* Caption — the story */}
             <Controller

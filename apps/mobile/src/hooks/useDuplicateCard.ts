@@ -83,12 +83,15 @@ export function useDuplicateCard() {
       return card;
     },
     onSuccess: (card) => {
+      // Duplicate never copies photos (see note above), so a clone shows catalog
+      // art when the source was TCG-linked, else falls back to name text.
       trackEvent('card_added', {
         binder_id: card.binder_id,
         page_id: card.page_id ?? null,
         page_position: card.position,
         is_first: false,
         via: 'duplicate',
+        image_source: card.tcg_card_id ? 'catalog' : 'none',
       });
       queryClient.invalidateQueries({ queryKey: bindersQueryKey(userId) });
       queryClient.invalidateQueries({ queryKey: cardsForBinderQueryKey(card.binder_id) });
