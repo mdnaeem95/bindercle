@@ -69,3 +69,6 @@ logs/
 # Misc
 *.tsbuildinfo
 .cache/
+
+# Claude Code (local tooling config)
+.claude/
